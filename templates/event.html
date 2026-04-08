@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-6 rounded-2xl shadow-lg w-96">
+      <h1 class="text-xl font-bold mb-4">{{ .Name }}</h1>
+
+      <p>Total: {{ .TotalSeats }}</p>
+      <p>Reservadas: {{ .Reserved }}</p>
+      <p class="font-semibold">Disponíveis: {{ .Available }}</p>
+
+      <hr class="my-4" />
+
+      <form method="POST" action="/reservations" class="flex flex-col gap-3">
+        <input type="hidden" name="event_id" value="{{ .ID }}" />
+
+        <input
+          type="text"
+          name="name"
+          placeholder="Seu nome"
+          class="border p-2 rounded-lg"
+        />
+
+        <input
+          type="number"
+          name="quantity"
+          placeholder="Quantidade"
+          class="border p-2 rounded-lg"
+        />
+
+        <button
+          class="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700"
+        >
+          Reservar
+        </button>
+      </form>
+
+      <a href="/create-event" class="text-blue-600 mt-4 inline-block">
+        Criar outro evento
+      </a>
+    </div>
+  </body>
+</html>
