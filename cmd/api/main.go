@@ -26,7 +26,6 @@ func main() {
 	// USECASES
 	// =====================
 	reserveUseCase := usecase.NewReserveSpotUseCase(
-		database,
 		eventRepo,
 		reservationRepo,
 	)

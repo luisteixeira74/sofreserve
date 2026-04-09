@@ -2,6 +2,7 @@ package http
 
 import (
 	"database/sql"
+	"html/template"
 	"net/http"
 
 	"sof-reserve/internal/core/usecase"
@@ -20,10 +21,29 @@ func NewRouter(
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", handler.HealthHandler)
-	mux.HandleFunc("/create-event", handler.CreateEventPage)
+
+	// onboarding
+	mux.HandleFunc("/create-event", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/onboarding", http.StatusFound)
+	})
+
+	mux.HandleFunc("/onboarding", func(w http.ResponseWriter, r *http.Request) {
+		tmpl := template.Must(template.ParseFiles("templates/onboarding.html"))
+		tmpl.Execute(w, nil)
+	})
+
+	mux.HandleFunc("/create-event/form", handler.CreateEventPage)
+
+	// eventos
 	mux.HandleFunc("/events", handler.CreateEventHandler)
 	mux.HandleFunc("/evento", handler.EventPage)
-	mux.HandleFunc("/reservations", handler.CreateReservationHandler)
+
+	// reservas
+	mux.HandleFunc("/reservation", handler.ReservationPage)
+	mux.HandleFunc("/events/reserve", handler.CreateReservationHandler)
+
+	// confirmação
+	mux.HandleFunc("/confirm", handler.ConfirmReservation)
 
 	return mux
 }

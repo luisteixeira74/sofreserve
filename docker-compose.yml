@@ -10,3 +10,5 @@ services:
       POSTGRES_DB: sofreserve
     ports:
       - "5432:5432"
+    volumes:
+      - ./migrations:/docker-entrypoint-initdb.d

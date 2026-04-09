@@ -11,31 +11,40 @@
       <p>Reservadas: {{ .Reserved }}</p>
       <p class="font-semibold">Disponíveis: {{ .Available }}</p>
 
+      <div class="mt-4">
+        <p class="text-sm text-gray-600 mb-1">
+          {{.Percentage}}% das vagas preenchidas
+        </p>
+
+        <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+          <div
+            class="h-4 rounded-full {{.ColorClass}} transition-all duration-700"
+            style="width: {{.WidthPercent}}%;"
+          ></div>
+        </div>
+      </div>
+
+      <!-- tempo restante -->
+      <p class="text-sm text-gray-600 mt-2">{{.RemainingText}}</p>
+
+      <!-- alerta -->
+      {{if .ShowAlert}}
+      <p class="text-yellow-600 text-sm">⚠️ Reservas encerram em breve</p>
+      {{end}}
+
       <hr class="my-4" />
 
-      <form method="POST" action="/reservations" class="flex flex-col gap-3">
-        <input type="hidden" name="event_id" value="{{ .ID }}" />
-
-        <input
-          type="text"
-          name="name"
-          placeholder="Seu nome"
-          class="border p-2 rounded-lg"
-        />
-
-        <input
-          type="number"
-          name="quantity"
-          placeholder="Quantidade"
-          class="border p-2 rounded-lg"
-        />
-
-        <button
-          class="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700"
-        >
-          Reservar
-        </button>
-      </form>
+      <!-- botão condicionado -->
+      {{if .IsClosed}}
+      <p class="text-red-600 font-semibold text-center">Evento encerrado</p>
+      {{else}}
+      <a
+        href="/reservation?event_id={{.ID}}"
+        class="block text-center bg-green-600 text-white p-2 rounded-lg hover:bg-green-700"
+      >
+        Reservar vaga
+      </a>
+      {{end}}
 
       <a href="/create-event" class="text-blue-600 mt-4 inline-block">
         Criar outro evento

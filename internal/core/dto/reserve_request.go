@@ -1,7 +1,8 @@
 package dto
 
 type ReserveRequest struct {
-    EventID int
-    Name    string
-    Quantity int
+	EventID  int
+	Name     string
+	Email    string
+	Quantity int
 }

@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-6 rounded-2xl shadow-lg w-96">
+      <h1 class="text-xl font-bold mb-4">Reservar vaga</h1>
+
+      {{if .Error}}
+      <p class="text-red-500 mb-2">{{.Error}}</p>
+      {{end}}
+
+      <form method="POST" action="/events/reserve" class="flex flex-col gap-3">
+        <input type="hidden" name="event_id" value="{{.EventID}}" />
+
+        <input
+          type="text"
+          name="name"
+          value="{{.Name}}"
+          placeholder="Seu nome"
+          class="border p-2 rounded-lg"
+        />
+
+        <input
+          type="email"
+          name="email"
+          value="{{.Email}}"
+          placeholder="Seu email"
+          class="border p-2 rounded-lg"
+        />
+
+        <input
+          type="number"
+          name="quantity"
+          value="{{.Quantity}}"
+          placeholder="Quantidade"
+          class="border p-2 rounded-lg"
+        />
+
+        {{if .ShowAlert}}
+        <p class="text-yellow-600">⚠️ Reservas encerram em breve</p>
+        {{end}}
+
+        <button
+          class="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700"
+        >
+          Confirmar reserva
+        </button>
+      </form>
+
+      <a href="/evento?id={{.EventID}}" class="text-blue-600 mt-4 inline-block">
+        Voltar ao evento
+      </a>
+    </div>
+  </body>
+</html>
