@@ -147,8 +147,3 @@ func (uc *ReserveSpotUseCase) Execute(req dto.ReserveRequest) error {
 	// =====================
 	return tx.Commit()
 }
-
-func generateToken(email string) string {
-	token := fmt.Sprintf("%d-%s", time.Now().UnixNano(), email)
-	return token
-}

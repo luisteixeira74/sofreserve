@@ -38,15 +38,15 @@
           class="border p-2 rounded-lg"
         />
 
-        {{if .ShowAlert}}
-        <p class="text-yellow-600">⚠️ Reservas encerram em breve</p>
-        {{end}}
-
-        <button
-          class="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700"
-        >
+        <button class="bg-green-500 text-white p-2 rounded">
           Confirmar reserva
         </button>
+
+        {{ if .IsClosed }}
+        <p class="text-gray-500">Desculpe, as reservas estão encerradas.</p>
+        {{ else }} {{if .ShowAlert}}
+        <p class="text-yellow-600">⚠️ Reservas encerram em breve</p>
+        {{end}} {{ end }}
       </form>
 
       <a href="/evento?id={{.EventID}}" class="text-blue-600 mt-4 inline-block">

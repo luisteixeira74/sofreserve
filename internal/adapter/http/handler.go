@@ -91,14 +91,25 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	endsAtStr := r.FormValue("ends_at")
+
+	endsAt, err := time.Parse("2006-01-02", endsAtStr)
+	if err != nil {
+		h.renderTemplate(w, "create_event.html", map[string]interface{}{
+			"Error": "Data inválida",
+		})
+		return
+	}
+
 	var id int
 	err = h.db.QueryRow(
-		"INSERT INTO events (name, total_seats) VALUES ($1, $2) RETURNING id",
-		name, totalSeats,
+		"INSERT INTO events (name, total_seats, ends_at) VALUES ($1, $2, $3) RETURNING id",
+		name, totalSeats, endsAt,
 	).Scan(&id)
 
 	if err != nil {
-		http.Error(w, "erro ao criar evento", http.StatusInternalServerError)
+		// http.Error(w, "erro ao criar evento", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
