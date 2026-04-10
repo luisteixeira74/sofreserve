@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"sof-reserve/internal/core/dto"
+	"sof-reserve/internal/core/entity"
 	coreErr "sof-reserve/internal/core/errors"
 	"sof-reserve/internal/core/usecase"
 )
@@ -23,7 +24,6 @@ type EventView struct {
 	Available  int
 	Percentage int
 	ColorClass string
-	WidthClass string
 	RemainingText string
 	ShowAlert     bool
 	IsClosed      bool
@@ -32,6 +32,7 @@ type EventView struct {
 type Handler struct {
 	db        *sql.DB
 	reserveUC *usecase.ReserveSpotUseCase
+	confirmUC *usecase.ConfirmReservationUseCase
 }
 
 type ReservationPageData struct {
@@ -46,15 +47,15 @@ type ReservationPageData struct {
 // HELPERS
 // =====================
 
-func (h *Handler) renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
-	t, err := template.ParseFiles("templates/" + tmpl)
-	if err != nil {
-		http.Error(w, "erro ao carregar template", http.StatusInternalServerError)
-		return
-	}
+// func (h *Handler) renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
+// 	t, err := template.ParseFiles("templates/" + tmpl)
+// 	if err != nil {
+// 		http.Error(w, "erro ao carregar template", http.StatusInternalServerError)
+// 		return
+// 	}
 
-	_ = t.Execute(w, data)
-}
+// 	_ = t.Execute(w, data)
+// }
 
 // =====================
 // HEALTH
@@ -70,7 +71,9 @@ func (h *Handler) HealthHandler(w http.ResponseWriter, r *http.Request) {
 // =====================
 
 func (h *Handler) CreateEventPage(w http.ResponseWriter, r *http.Request) {
-	h.renderTemplate(w, "create_event.html", nil)
+	h.renderTemplate(w, "layout", map[string]any{
+		"Page": "create_event",
+	})
 }
 
 func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
@@ -87,6 +90,14 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 		h.renderTemplate(w, "create_event.html", map[string]interface{}{
 			"Error": "Dados inválidos",
 			"Name":  name,
+		})
+		return
+	}
+
+	// validação extra para evitar eventos com muitas vagas
+	if totalSeats <= 0 || totalSeats > 1000 {
+		h.renderTemplate(w, "create_event.html", map[string]interface{}{
+			"Error": "O evento pode ter no máximo 1000 vagas",
 		})
 		return
 	}
@@ -203,7 +214,6 @@ func (h *Handler) EventPage(w http.ResponseWriter, r *http.Request) {
 		Available:  totalSeats - reserved,
 		Percentage: percentage,
 		ColorClass: colorClass,
-		WidthClass: fmt.Sprintf("w-%d", percentage),
 		RemainingText: remainingText,
 		ShowAlert:     showAlert,
 		IsClosed:      isClosed,
@@ -247,6 +257,12 @@ func (h *Handler) CreateReservationHandler(w http.ResponseWriter, r *http.Reques
 
 	if errQty != nil || qty <= 0 {
 		data.Error = "Quantidade inválida"
+		h.renderTemplate(w, "reservation.html", data)
+		return
+	}
+
+	if qty <= 0 || qty > 10 {
+		data.Error = "Você pode reservar no máximo 10 vagas"
 		h.renderTemplate(w, "reservation.html", data)
 		return
 	}
@@ -308,55 +324,95 @@ func (h *Handler) ReservationPage(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ConfirmReservation(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 
+	output, err := h.confirmUC.Execute(token)
+	if err != nil {
+
+		var appErr *coreErr.AppError
+		if errors.As(err, &appErr) {
+			h.renderTemplate(w, "confirm.html", map[string]interface{}{
+				"Status":  "error",
+				"Message": appErr.Message,
+			})
+			return
+		}
+
+		http.Error(w, "erro interno", http.StatusInternalServerError)
+		return
+	}
+
+	h.renderTemplate(w, "confirm.html", output)
+}
+
+func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("token")
+
 	if token == "" {
 		http.Error(w, "token inválido", http.StatusBadRequest)
 		return
 	}
 
-	var name string
-	var email string
-	var quantity int
-	var eventID int
+	tx, err := h.db.Begin()
+	if err != nil {
+		http.Error(w, "erro interno", http.StatusInternalServerError)
+		return
+	}
+	defer func() { _ = tx.Rollback() }()
 
-	err := h.db.QueryRow(
-		`SELECT name, email, quantity, event_id 
-		 FROM reservations 
-		 WHERE token = $1`,
-		token,
-	).Scan(&name, &email, &quantity, &eventID)
+	var name, email string
+	var quantity, eventID int
+	var status string
+
+	err = tx.QueryRow(`
+		SELECT name, email, quantity, event_id, status
+		FROM reservations
+		WHERE token = $1
+		FOR UPDATE
+	`, token).Scan(&name, &email, &quantity, &eventID, &status)
 
 	if err != nil {
 		http.Error(w, "reserva não encontrada", http.StatusNotFound)
 		return
 	}
 
-	// confirma (apenas se ainda estiver pending)
-	res, err := h.db.Exec(
-		`UPDATE reservations 
-		 SET status = 'confirmed' 
-		 WHERE token = $1 AND status = 'pending'`,
-		token,
-	)
+	// idempotência
+	if entity.ReservationStatus(status) == entity.StatusCanceled {
+		_ = tx.Commit()
 
-	if err != nil {
-		http.Error(w, "erro ao confirmar", http.StatusInternalServerError)
+		h.renderTemplate(w, "cancel.html", map[string]interface{}{
+			"Message": "Essa reserva já foi cancelada.",
+			"EventID": eventID,
+		})
 		return
 	}
 
-	rows, _ := res.RowsAffected()
+	// cancela
+	_, err = tx.Exec(`
+		UPDATE reservations
+		SET status = $1
+		WHERE token = $2
+	`, string(entity.StatusCanceled), token)
 
-	status := "confirmada"
-	if rows == 0 {
-		status = "já confirmada"
+	if err != nil {
+		http.Error(w, "erro ao cancelar", http.StatusInternalServerError)
+		return
 	}
 
-	data := map[string]interface{}{
-		"Name":     name,
-		"Email":    email,
-		"Quantity": quantity,
-		"EventID":  eventID,
-		"Status":   status,
+	if err := tx.Commit(); err != nil {
+		http.Error(w, "erro interno", http.StatusInternalServerError)
+		return
 	}
 
-	h.renderTemplate(w, "confirm.html", data)
+	h.renderTemplate(w, "cancel.html", map[string]interface{}{
+		"Message": "Reserva cancelada com sucesso.",
+		"EventID": eventID,
+	})
+}
+
+func (h *Handler) renderTemplate(w http.ResponseWriter, name string, data interface{}) {
+	t := template.Must(template.ParseGlob("templates/*.html"))
+
+	err := t.ExecuteTemplate(w, name, data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)	
+	}
 }

@@ -10,12 +10,14 @@ import (
 
 func NewRouter(
 	reserveUC *usecase.ReserveSpotUseCase,
+	confirmUC *usecase.ConfirmReservationUseCase,
 	db *sql.DB,
 ) http.Handler {
 
 	handler := &Handler{
-		db:        db,
 		reserveUC: reserveUC,
+		confirmUC: confirmUC,
+		db:        db,
 	}
 
 	mux := http.NewServeMux()
@@ -44,6 +46,13 @@ func NewRouter(
 
 	// confirmação
 	mux.HandleFunc("/confirm", handler.ConfirmReservation)
+
+	// cancel reserva
+	mux.HandleFunc("/cancel", handler.CancelReservation)
+
+	// static files
+	fs := http.FileServer(http.Dir("./templates/assets"))
+	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	return mux
 }

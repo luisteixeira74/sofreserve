@@ -40,6 +40,16 @@ var (
 		Message: "As reservas para este evento estão encerradas",
 		Code:    "EVENT_CLOSED",
 	}
+
+	ErrReservationNotFound = &AppError{
+		Message: "Reserva não encontrada",
+		Code:    "RESERVATION_NOT_FOUND",
+	}
+
+	ErrInvalidToken = &AppError{
+		Message: "Token inválido",
+		Code:    "INVALID_TOKEN",
+	}
 )
 
 type AppError struct {

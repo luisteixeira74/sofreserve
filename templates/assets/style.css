@@ -1,0 +1,259 @@
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&display=swap");
+
+:root {
+  --soft-beige: #ddcaa2;
+  --sage: #aebea3;
+  --dust-rose: #b97479;
+  --alert-red: #d83957;
+  --steel: #4e5c69;
+
+  /* novos tons escuros do sistema */
+  --bg-1: #3f4a54;
+  --bg-2: #2f3942;
+  --card: rgba(78, 92, 105, 0.65);
+  --border: rgba(174, 190, 163, 0.18);
+}
+
+/* =========================
+   BASE
+========================= */
+
+body.app {
+  margin: 0;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto;
+
+  background: linear-gradient(180deg, var(--bg-1), var(--bg-2));
+  color: var(--soft-beige);
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 16px 28px;
+
+  background: rgba(78, 92, 105, 0.85);
+  backdrop-filter: blur(10px);
+
+  border-bottom: 1px solid var(--border);
+}
+
+/* =========================
+   LOGO
+========================= */
+
+.logo {
+  font-family: "Orbitron", sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+
+  color: var(--soft-beige);
+
+  text-transform: uppercase;
+
+  display: inline-block;
+
+  text-shadow:
+    0 0 6px rgba(221, 202, 162, 0.25),
+    0 0 14px rgba(78, 92, 105, 0.35);
+}
+
+.logo::after {
+  content: "";
+  display: block;
+  height: 2px;
+  margin-top: 4px;
+
+  background: linear-gradient(
+    90deg,
+    var(--alert-red),
+    var(--dust-rose),
+    var(--sage)
+  );
+
+  border-radius: 2px;
+}
+
+/* =========================
+   NAV
+========================= */
+
+.nav a {
+  margin-left: 14px;
+  text-decoration: none;
+  color: rgba(221, 202, 162, 0.75);
+  font-size: 14px;
+}
+
+.nav a:hover {
+  color: var(--sage);
+}
+
+/* =========================
+   LAYOUT
+========================= */
+
+.container {
+  max-width: 520px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+/* =========================
+   CARD
+========================= */
+
+.card {
+  background: var(--card);
+
+  border: 1px solid var(--border);
+
+  border-radius: 14px;
+
+  padding: 24px;
+
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+
+  backdrop-filter: blur(12px);
+}
+
+/* =========================
+   TITLES
+========================= */
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+
+  color: var(--soft-beige);
+
+  margin-bottom: 16px;
+}
+
+.title.sci-fi {
+  font-family: "Orbitron", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+
+  text-shadow: 0 0 8px rgba(174, 190, 163, 0.25);
+}
+
+.subtitle {
+  font-size: 13px;
+  color: rgba(221, 202, 162, 0.65);
+
+  margin-bottom: 20px;
+}
+
+/* =========================
+   FORM
+========================= */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field label {
+  font-size: 13px;
+  color: rgba(221, 202, 162, 0.8);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.field input {
+  width: 100%;
+  padding: 10px 12px;
+
+  background: rgba(47, 57, 66, 0.9);
+
+  border: 1px solid rgba(174, 190, 163, 0.2);
+
+  border-radius: 10px;
+
+  color: var(--soft-beige);
+
+  outline: none;
+
+  font-size: 14px;
+}
+
+.field input:focus {
+  border-color: var(--sage);
+  box-shadow: 0 0 0 3px rgba(174, 190, 163, 0.15);
+}
+
+small {
+  font-size: 11px;
+  color: rgba(221, 202, 162, 0.5);
+}
+
+/* =========================
+   BUTTON
+========================= */
+
+.btn-primary {
+  margin-top: 8px;
+
+  background: var(--alert-red);
+  color: var(--soft-beige);
+
+  border: 1px solid rgba(78, 92, 105, 0.4);
+
+  padding: 12px;
+
+  border-radius: 10px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+
+  box-shadow: 0 6px 18px rgba(216, 57, 87, 0.25);
+}
+
+.btn-primary:hover {
+  background: var(--dust-rose);
+}
+
+/* =========================
+   ERROR
+========================= */
+
+.error {
+  background: rgba(216, 57, 87, 0.12);
+
+  border: 1px solid rgba(216, 57, 87, 0.35);
+
+  color: var(--alert-red);
+
+  padding: 10px 12px;
+
+  border-radius: 10px;
+
+  font-size: 13px;
+
+  margin-bottom: 12px;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.error::before {
+  content: "⚠";
+  font-size: 14px;
+}

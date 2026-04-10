@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sof-reserve/internal/adapter/repository/postgres"
 	"sof-reserve/internal/core/dto"
+	"sof-reserve/internal/core/entity"
 	coreErr "sof-reserve/internal/core/errors"
 	"time"
 )
@@ -56,7 +57,8 @@ func (uc *ReserveSpotUseCase) Execute(req dto.ReserveRequest) error {
 	defer tx.Rollback()
 
 	// =====================
-	// REGRA: EMAIL ÚNICO (apenas confirmed)
+	// REGRA: 1 reserva ativa por email (pending ou confirmed)
+	// EVITA: reservas duplicadas e também evita que alguém faça várias reservas pendentes e depois confirme todas de uma vez
 	// =====================
 	exists, err := uc.reservationRepo.ExistsByEventAndEmail(tx, req.EventID, req.Email)
 	if err != nil {
@@ -118,7 +120,7 @@ func (uc *ReserveSpotUseCase) Execute(req dto.ReserveRequest) error {
 	// GERAR TOKEN + STATUS
 	// =====================
 	token := generateToken(req.Email)
-	status := "pending"
+	status := entity.StatusPending
 
 	// =====================
 	// INSERT 
@@ -129,7 +131,7 @@ func (uc *ReserveSpotUseCase) Execute(req dto.ReserveRequest) error {
 		req.Name,
 		req.Email,
 		req.Quantity,
-		status,
+		string(status),
 		token,
 	)
 	if err != nil {

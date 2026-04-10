@@ -30,10 +30,14 @@ func main() {
 		reservationRepo,
 	)
 
+	confirmationUseCase := usecase.NewConfirmReservationUseCase(
+		database,
+	)
+
 	// =====================
 	// ROUTER
 	// =====================
-	router := httpadapter.NewRouter(reserveUseCase, database)
+	router := httpadapter.NewRouter(reserveUseCase, confirmationUseCase, database)
 
 	// =====================
 	// SERVER

@@ -1,51 +1,37 @@
-<!doctype html>
-<html>
-  <head>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="bg-white p-6 rounded-2xl shadow-lg w-96">
-      <h1 class="text-xl font-bold mb-4">Criar Evento</h1>
+{{ define "content" }}
 
-      {{if .Error}}
-      <p class="text-red-500 mb-2">{{.Error}}</p>
-      {{end}}
+<h1 class="title sci-fi">Criar Evento</h1>
 
-      <form method="POST" action="/events" class="flex flex-col gap-3">
-        <input
-          type="text"
-          name="name"
-          placeholder="Nome do evento"
-          class="border p-2 rounded-lg"
-        />
+{{if .Error}}
+<p class="error">{{.Error}}</p>
+{{end}}
 
-        <input
-          type="number"
-          name="total_seats"
-          placeholder="Total de vagas"
-          class="border p-2 rounded-lg"
-        />
+<form method="POST" action="/events" class="flex flex-col gap-3">
+  <input
+    type="text"
+    name="name"
+    placeholder="Nome do evento"
+    class="border p-2 rounded-lg"
+  />
 
-        
-        <label class="text-sm text-gray-600">
-          Data do Evento (não aceita reservas nesta data)
-        </label>
-        <input
-          type="date"
-          name="ends_at"
-          placeholder="Data de término"
-          class="border p-2 rounded-lg"
-          aria-placeholder="Data do Evento (não aceita reservas nesta data)"
-        /> 
+  <input
+    type="number"
+    name="total_seats"
+    placeholder="Total de vagas"
+    class="border p-2 rounded-lg"
+  />
 
-        
-         <button class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">
-          Criar
+  <label class="text-sm text-gray-600">
+    Data do Evento (não aceitar reservas nesta data)
+  </label>
+  <input
+    type="date"
+    name="ends_at"
+    placeholder="Data do Evento"
+    class="border p-2 rounded-lg"
+  />
 
-        <button class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">
-          Criar
-        </button>
-      </form>
-    </div>
-  </body>
-</html>
+  <button class="btn-primary rounded-lg font-semibold">Criar</button>
+</form>
+
+{{ end }}

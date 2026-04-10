@@ -1,6 +1,9 @@
 package postgres
 
-import "database/sql"
+import (
+	"database/sql"
+	"sof-reserve/internal/core/entity"
+)
 
 type ReservationRepository struct {
 	db *sql.DB
@@ -16,8 +19,9 @@ func (r *ReservationRepository) SumByEventID(tx *sql.Tx, eventID int) (int, erro
 	err := tx.QueryRow(
 		`SELECT COALESCE(SUM(quantity), 0) 
 		 FROM reservations 
-		 WHERE event_id = $1 AND status = 'confirmed'`,
+		 WHERE event_id = $1 AND status = $2`,
 		eventID,
+		string(entity.StatusConfirmed),
 	).Scan(&total)
 
 	return total, err
@@ -57,9 +61,12 @@ func (r *ReservationRepository) ExistsByEventAndEmail(
 			FROM reservations 
 			WHERE event_id = $1 
 			AND email = $2 
-			AND status = 'confirmed'
+			AND status IN ($3, $4)
 		)`,
-		eventID, email,
+		eventID,
+		email,
+		string(entity.StatusPending),
+		string(entity.StatusConfirmed),
 	).Scan(&exists)
 
 	return exists, err

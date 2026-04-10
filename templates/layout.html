@@ -1,0 +1,28 @@
+{{ define "layout" }}
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sof_Reserve</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/assets/style.css" />
+  </head>
+
+  <body class="app">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="logo">Sof_Reserve</div>
+      <nav class="nav">
+        <a href="/onboarding">Início</a>
+        <a href="/events">Eventos</a>
+        <a href="/create-event/form">Criar evento</a>
+      </nav>
+    </header>
+
+    <!-- MAIN -->
+    <main class="container">{{ template "content" . }}</main>
+  </body>
+</html>
+{{ end }}
