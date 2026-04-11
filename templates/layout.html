@@ -22,7 +22,12 @@
     </header>
 
     <!-- MAIN -->
-    <main class="container">{{ template "content" . }}</main>
+    <main class="container">
+      {{if eq .Page "create_event"}} {{template "create_event" .}} {{else if eq
+      .Page "onboarding"}} {{template "onboarding" .}} {{else if eq .Page
+      "event"}} {{template "event" .}} {{else if eq .Page "reservation"}}
+      {{template "reservation" .}} {{end}}
+    </main>
   </body>
 </html>
 {{ end }}

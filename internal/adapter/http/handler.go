@@ -44,26 +44,21 @@ type ReservationPageData struct {
 }
 
 // =====================
-// HELPERS
-// =====================
-
-// func (h *Handler) renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
-// 	t, err := template.ParseFiles("templates/" + tmpl)
-// 	if err != nil {
-// 		http.Error(w, "erro ao carregar template", http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	_ = t.Execute(w, data)
-// }
-
-// =====================
 // HEALTH
 // =====================
 
 func (h *Handler) HealthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
+}
+
+// =====================
+// ONBOARDING
+// =====================
+func (h *Handler) OnboardingPage(w http.ResponseWriter, r *http.Request) {
+	h.renderTemplate(w, "layout", map[string]any{
+		"Page": "onboarding",
+	})
 }
 
 // =====================
@@ -82,12 +77,14 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	
 	name := r.FormValue("name")
 	totalSeatsStr := r.FormValue("total_seats")
 
 	totalSeats, err := strconv.Atoi(totalSeatsStr)
 	if name == "" || err != nil || totalSeats <= 0 {
-		h.renderTemplate(w, "create_event.html", map[string]interface{}{
+		h.renderTemplate(w, "layout", map[string]interface{}{
+			"Page":  "create_event",
 			"Error": "Dados inválidos",
 			"Name":  name,
 		})

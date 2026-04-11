@@ -2,7 +2,6 @@ package http
 
 import (
 	"database/sql"
-	"html/template"
 	"net/http"
 
 	"sof-reserve/internal/core/usecase"
@@ -25,21 +24,7 @@ func NewRouter(
 	mux.HandleFunc("/health", handler.HealthHandler)
 
 	// onboarding
-	mux.HandleFunc("/create-event", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/onboarding", http.StatusFound)
-	})
-
-	mux.HandleFunc("/onboarding", func(w http.ResponseWriter, r *http.Request) {
-		tmpl := template.Must(template.ParseFiles(
-			"templates/layout.html",
-			"templates/onboarding.html",
-		))
-
-		err := tmpl.ExecuteTemplate(w, "layout", nil)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-		}
-	})
+	mux.HandleFunc("/onboarding", handler.OnboardingPage)
 
 	mux.HandleFunc("/create-event/form", handler.CreateEventPage)
 

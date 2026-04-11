@@ -1,6 +1,6 @@
-{{ define "content" }}
+{{ define "onboarding" }}
 
-<h1 class="title sci-fi">Onboarding - Conheça o SOF_RESERVE</h1>
+<h1 class="title sci-fi">Conheça o SOF_RESERVE</h1>
       <!-- PROGRESSO -->
       <div class="flex gap-2 mb-6">
         <div class="h-2 flex-1 rounded bg-gray-300" id="bar1"></div>
@@ -10,25 +10,25 @@
 
       <!-- STEP 1 -->
       <div class="step transition-all duration-500" id="step1">
-        <h1 class="text-xl font-bold mb-2">Crie eventos</h1>
-        <p class="text-gray-600">
-          Você define o nome do evento e o número total de vagas disponíveis.
+        <h1 class="text-xl font-bold mb-2 sci-fi">Crie eventos</h1>
+        <p class="text-gray-600 sci-fi">
+          Crie um Evento e o Número de vagas disponíveis.
         </p>
       </div>
 
       <!-- STEP 2 -->
       <div class="step hidden opacity-0 transition-all duration-500" id="step2">
         <h1 class="text-xl font-bold mb-2">Receba reservas</h1>
-        <p class="text-gray-600">
-          Usuários podem reservar vagas informando nome, email e quantidade.
+        <p class="text-gray-600 sci-fi">
+          Usuários reservarm e confirmam as vagas para o evento criado por você.
         </p>
       </div>
 
       <!-- STEP 3 -->
       <div class="step hidden opacity-0 transition-all duration-500" id="step3">
-        <h1 class="text-xl font-bold mb-2">Acompanhe em tempo real</h1>
+        <h1 class="text-xl font-bold mb-2 sci-fi">Acompanhe em tempo real</h1>
         <p class="text-gray-600">
-          Veja quantas vagas foram preenchidas e o percentual de ocupação.
+          Veja quantas vagas foram preenchidas e o percentual de ocupação em tempo real.
         </p>
       </div>
 
@@ -37,7 +37,7 @@
         <div class="mt-6 flex justify-between items-center">
           <button
             id="nextBtn"
-            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            class="sci-fi bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
           >
             Avançar
           </button>
@@ -45,7 +45,7 @@
           <a
             id="finalBtn"
             href="/create-event/form"
-            class="hidden bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+            class="hidden sci-fi bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
           >
             Criar meu primeiro Evento
           </a>
