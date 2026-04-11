@@ -1,11 +1,6 @@
-<!doctype html>
-<html>
-  <head>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
+{{ define "content" }}
 
-  <body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="bg-white p-8 rounded-2xl shadow-lg w-[420px]">
+<h1 class="title sci-fi">Onboarding - Conheça o SOF_RESERVE</h1>
       <!-- PROGRESSO -->
       <div class="flex gap-2 mb-6">
         <div class="h-2 flex-1 rounded bg-gray-300" id="bar1"></div>
@@ -102,5 +97,5 @@
 
       showStep(current);
     </script>
-  </body>
-</html>
+
+{{ end }}

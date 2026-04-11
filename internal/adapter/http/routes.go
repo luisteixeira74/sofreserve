@@ -30,8 +30,15 @@ func NewRouter(
 	})
 
 	mux.HandleFunc("/onboarding", func(w http.ResponseWriter, r *http.Request) {
-		tmpl := template.Must(template.ParseFiles("templates/onboarding.html"))
-		tmpl.Execute(w, nil)
+		tmpl := template.Must(template.ParseFiles(
+			"templates/layout.html",
+			"templates/onboarding.html",
+		))
+
+		err := tmpl.ExecuteTemplate(w, "layout", nil)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+		}
 	})
 
 	mux.HandleFunc("/create-event/form", handler.CreateEventPage)
