@@ -44,6 +44,15 @@ type ReservationPageData struct {
 }
 
 // =====================
+// VIEWS
+// struct para chamar templates e passar dados
+// =====================
+type RenderTemplateData struct {
+	Page  string
+	Data any
+}
+
+// =====================
 // HEALTH
 // =====================
 
@@ -216,7 +225,10 @@ func (h *Handler) EventPage(w http.ResponseWriter, r *http.Request) {
 		IsClosed:      isClosed,
 	}
 
-	h.renderTemplate(w, "event.html", view)
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page: "event",
+		Data: view,
+	})	
 }
 
 // =====================
@@ -297,7 +309,7 @@ func (h *Handler) CreateReservationHandler(w http.ResponseWriter, r *http.Reques
 			data.Email = email
 			data.Quantity = qty
 
-			h.renderTemplate(w, "reservation.html", data)
+			h.renderTemplate(w, "reservation", data)
 			return
 		}
 		http.Error(w, "erro interno", http.StatusInternalServerError)
