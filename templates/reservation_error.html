@@ -1,0 +1,25 @@
+{{ define "reservation_error" }}
+
+<div class="terminal-card">
+  <div class="terminal-header">Erro na reserva • SofReserve</div>
+  <div class="terminal-subheader">> Evento: {{.EventTitle}}</div>
+
+  <div class="terminal-body">
+    <p class="error">> {{.Message}}</p>
+
+    <br />
+
+    <p class="muted">
+      > Não foi possível confirmar sua reserva. O link pode estar inválido ou
+      expirado.
+    </p>
+
+    <br /><br />
+
+    <div class="onboarding-actions">
+      <a href="/onboarding" class="btn-terminal"> [ VOLTAR AO INÍCIO ] </a>
+    </div>
+  </div>
+</div>
+
+{{ end }}

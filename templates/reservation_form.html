@@ -1,0 +1,45 @@
+{{define "reservation_form"}}
+
+<div class="terminal-card">
+  <div class="terminal-header">{{.Title}}</div>
+
+  <div class="terminal-body">
+    <div class="terminal-subheader">Faça abaixo sua reserva para o evento</div>
+
+    {{if .Data.Error}}
+    <p class="error">> ERRO: {{.Data.Error}}</p>
+    <br />
+    {{end}}
+
+    <form method="POST" action="/events/reserve" class="form">
+      <input type="hidden" name="event_id" value="{{.Data.EventID}}" />
+
+      <div class="field">
+        <label>> Nome</label>
+        <input type="text" name="name" value="{{.Data.Name}}" />
+      </div>
+
+      <div class="field">
+        <label>> Email</label>
+        <input type="email" name="email" value="{{.Data.Email}}" />
+      </div>
+
+      <div class="field">
+        <label>> Quantidade</label>
+        <input
+          type="number"
+          name="quantity"
+          min="1"
+          max="10"
+          value="{{if gt .Data.Quantity 0}}{{.Data.Quantity}}{{else}}1{{end}}"
+        />
+      </div>
+
+      <br />
+
+      <button class="btn-terminal">[ CONFIRMAR RESERVA ]</button>
+    </form>
+  </div>
+</div>
+
+{{end}}

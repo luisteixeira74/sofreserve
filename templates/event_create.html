@@ -1,0 +1,33 @@
+{{define "event_create"}}
+
+<div class="terminal-card">
+  <div class="terminal-header">{{.Title}}</div>
+
+  <div class="terminal-body">
+    {{with .Data}} {{if .Error}}
+    <p class="error">> ERRO: {{.Error}}</p>
+    <br />
+    {{end}} {{end}}
+
+    <form method="POST" action="/events" class="form">
+      <div class="field">
+        <label>> Nome do evento</label>
+        <input type="text" name="name" />
+      </div>
+
+      <div class="field">
+        <label>> Total de vagas</label>
+        <input type="number" name="total_seats" />
+      </div>
+
+      <div class="field">
+        <label>> Data do evento (não aceita reservas nesta data)</label>
+        <input type="date" name="ends_at" />
+      </div>
+
+      <button class="btn-terminal">CRIAR EVENTO</button>
+    </form>
+  </div>
+</div>
+
+{{end}}

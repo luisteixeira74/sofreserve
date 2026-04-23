@@ -26,20 +26,19 @@ func NewRouter(
 	// onboarding
 	mux.HandleFunc("/onboarding", handler.OnboardingPage)
 
-	mux.HandleFunc("/create-event/form", handler.CreateEventPage)
+	// eventos (admin)
+	mux.HandleFunc("/events/new", handler.CreateEventPage)   // GET
+	mux.HandleFunc("/events/view", handler.EventPage)        // GET
+	mux.HandleFunc("/events", handler.CreateEventHandler)    // POST
 
-	// eventos
-	mux.HandleFunc("/events", handler.CreateEventHandler)
-	mux.HandleFunc("/evento", handler.EventPage)
+	mux.HandleFunc("/e/", handler.EventPublicPage)
 
-	// reservas
-	mux.HandleFunc("/reservation", handler.ReservationPage)
-	mux.HandleFunc("/events/reserve", handler.CreateReservationHandler)
-
+	// reservas (guest)
+	mux.HandleFunc("/reservation", handler.ReservationPage)      // GET
+	mux.HandleFunc("/events/reserve", handler.CreateReservationHandler) // POST
 	// confirmação
 	mux.HandleFunc("/confirm", handler.ConfirmReservation)
-
-	// cancel reserva
+	// cancelamento
 	mux.HandleFunc("/cancel", handler.CancelReservation)
 
 	// static files

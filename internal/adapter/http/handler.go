@@ -17,16 +17,16 @@ import (
 )
 
 type EventView struct {
-	ID         int
-	Name       string
-	TotalSeats int
-	Reserved   int
-	Available  int
-	Percentage int
-	ColorClass string
+	ID            int
+	Name          string
+	TotalSeats    int
+	Reserved      int
+	Available     int
+	Percentage    int
 	RemainingText string
 	ShowAlert     bool
 	IsClosed      bool
+	PublicID      string
 }
 
 type Handler struct {
@@ -36,47 +36,36 @@ type Handler struct {
 }
 
 type ReservationPageData struct {
-	Error    string
-	EventID  int
-	Name     string
-	Email    string
-	Quantity int
+	Error     string
+	EventID   int
+	Name      string
+	Email     string
+	Quantity  int
+	EventName string
 }
 
-// =====================
-// VIEWS
-// struct para chamar templates e passar dados
-// =====================
 type RenderTemplateData struct {
-	Page  string
+	Page string
+	Title string
 	Data any
 }
-
-// =====================
-// HEALTH
-// =====================
 
 func (h *Handler) HealthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-// =====================
-// ONBOARDING
-// =====================
 func (h *Handler) OnboardingPage(w http.ResponseWriter, r *http.Request) {
-	h.renderTemplate(w, "layout", map[string]any{
-		"Page": "onboarding",
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page: "onboarding",
+		Title: "Onboarding • SofReserve",
 	})
 }
 
-// =====================
-// CREATE EVENT
-// =====================
-
 func (h *Handler) CreateEventPage(w http.ResponseWriter, r *http.Request) {
-	h.renderTemplate(w, "layout", map[string]any{
-		"Page": "create_event",
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page: "event_create",
+		Title: "Criar evento • SofReserve",
 	})
 }
 
@@ -86,81 +75,58 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
 	name := r.FormValue("name")
 	totalSeatsStr := r.FormValue("total_seats")
 
 	totalSeats, err := strconv.Atoi(totalSeatsStr)
-	if name == "" || err != nil || totalSeats <= 0 {
-		h.renderTemplate(w, "layout", map[string]interface{}{
-			"Page":  "create_event",
-			"Error": "Dados inválidos",
-			"Name":  name,
+	if name == "" || err != nil || totalSeats <= 0 || totalSeats > 1000 {
+		h.renderTemplate(w, "layout", RenderTemplateData{
+			Page: "event_create",
+			Title: "Criar evento • SofReserve",
+			Data: map[string]any{
+				"Name":  name,
+				"Error": "Dados inválidos",
+			},
 		})
 		return
 	}
 
-	// validação extra para evitar eventos com muitas vagas
-	if totalSeats <= 0 || totalSeats > 1000 {
-		h.renderTemplate(w, "create_event.html", map[string]interface{}{
-			"Error": "O evento pode ter no máximo 1000 vagas",
-		})
-		return
-	}
-
-	endsAtStr := r.FormValue("ends_at")
-
-	endsAt, err := time.Parse("2006-01-02", endsAtStr)
+	endsAt, err := time.Parse("2006-01-02", r.FormValue("ends_at"))
 	if err != nil {
-		h.renderTemplate(w, "create_event.html", map[string]interface{}{
-			"Error": "Data inválida",
+		h.renderTemplate(w, "layout", RenderTemplateData{
+			Page: "event_create",
+			Title: "Criar evento • SofReserve",
+			Data: map[string]any{
+				"Error": "Data inválida",
+			},
 		})
 		return
 	}
+
+	publicID := strconv.FormatInt(time.Now().UnixNano(), 36)
 
 	var id int
 	err = h.db.QueryRow(
-		"INSERT INTO events (name, total_seats, ends_at) VALUES ($1, $2, $3) RETURNING id",
-		name, totalSeats, endsAt,
+		"INSERT INTO events (name, total_seats, ends_at, public_id) VALUES ($1, $2, $3, $4) RETURNING id",
+		name, totalSeats, endsAt, publicID,
 	).Scan(&id)
 
 	if err != nil {
-		// http.Error(w, "erro ao criar evento", http.StatusInternalServerError)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/evento?id="+strconv.Itoa(id), http.StatusSeeOther)
+	http.Redirect(w, r, "/events/view?id="+strconv.Itoa(id), http.StatusSeeOther)
 }
 
+//
 // =====================
-// EVENT PAGE
+// CORE VIEW BUILDER
 // =====================
+//
 
-func (h *Handler) EventPage(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil || id <= 0 {
-		http.NotFound(w, r)
-		return
-	}
-
-	var name string
-	var totalSeats int
-	var endsAt time.Time
-
-	err = h.db.QueryRow(
-		"SELECT name, total_seats, ends_at FROM events WHERE id = $1",
-		id,
-	).Scan(&name, &totalSeats, &endsAt)
-
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
+func (h *Handler) buildEventView(id int, name string, totalSeats int, endsAt time.Time, publicID string) EventView {
 	now := time.Now()
-
 	remaining := endsAt.Sub(now)
 
 	isClosed := remaining <= 0
@@ -187,7 +153,7 @@ func (h *Handler) EventPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var reserved int
-	err = h.db.QueryRow(
+	_ = h.db.QueryRow(
 		"SELECT COALESCE(SUM(quantity), 0) FROM reservations WHERE event_id = $1 AND status = 'confirmed'",
 		id,
 	).Scan(&reserved)
@@ -197,43 +163,102 @@ func (h *Handler) EventPage(w http.ResponseWriter, r *http.Request) {
 		percentage = (reserved * 100) / totalSeats
 	}
 
-	if err != nil {
-		http.Error(w, "erro ao carregar reservas", http.StatusInternalServerError)
-		return
-	}
-
-	colorClass := "bg-green-500"
-
-	if percentage < 50 {
-		colorClass = "bg-green-500"
-	} else if percentage < 80 {
-		colorClass = "bg-yellow-500"
-	} else {
-		colorClass = "bg-red-500"
-	}
-
-	view := EventView{
-		ID:         id,
-		Name:       name,
-		TotalSeats: totalSeats,
-		Reserved:   reserved,
-		Available:  totalSeats - reserved,
-		Percentage: percentage,
-		ColorClass: colorClass,
+	return EventView{
+		ID:            id,
+		Name:          name,
+		TotalSeats:    totalSeats,
+		Reserved:      reserved,
+		Available:     totalSeats - reserved,
+		Percentage:    percentage,
 		RemainingText: remainingText,
 		ShowAlert:     showAlert,
 		IsClosed:      isClosed,
+		PublicID:      publicID,
 	}
-
-	h.renderTemplate(w, "layout", RenderTemplateData{
-		Page: "event",
-		Data: view,
-	})	
 }
 
+//
 // =====================
-// CREATE RESERVATION
+// EVENT ADMIN
 // =====================
+//
+
+func (h *Handler) EventPage(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil || id <= 0 {
+		http.NotFound(w, r)
+		return
+	}
+
+	var name string
+	var totalSeats int
+	var endsAt time.Time
+	var publicID string
+
+	err = h.db.QueryRow(
+		"SELECT name, total_seats, ends_at, public_id FROM events WHERE id = $1",
+		id,
+	).Scan(&name, &totalSeats, &endsAt, &publicID)
+
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	view := h.buildEventView(id, name, totalSeats, endsAt, publicID)
+
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page: "event_dashboard",
+		Title: fmt.Sprintf("%s • Dashboard • SofReserve", name),
+		Data: view,
+	})
+}
+
+//
+// =====================
+// EVENT PUBLIC
+// =====================
+//
+
+func (h *Handler) EventPublicPage(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+
+	if len(parts) < 3 {
+		http.NotFound(w, r)
+		return
+	}
+
+	publicID := parts[2]
+
+	var id int
+	var name string
+	var totalSeats int
+	var endsAt time.Time
+
+	err := h.db.QueryRow(
+		"SELECT id, name, total_seats, ends_at FROM events WHERE public_id = $1",
+		publicID,
+	).Scan(&id, &name, &totalSeats, &endsAt)
+
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	view := h.buildEventView(id, name, totalSeats, endsAt, publicID)
+
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page: "event_public",
+		Title: fmt.Sprintf("%s • Reservas • SofReserve", name),
+		Data: view,
+	})
+}
+
+//
+// =====================
+// RESERVATION
+// =====================
+//
 
 func (h *Handler) CreateReservationHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -241,115 +266,159 @@ func (h *Handler) CreateReservationHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	eventIDStr := r.FormValue("event_id")
-	qtyStr := r.FormValue("quantity")
-
-	eventID, errID := strconv.Atoi(eventIDStr)
-	qty, errQty := strconv.Atoi(qtyStr)
-
-	name := r.FormValue("name")
-	email := r.FormValue("email")
+	eventID, errID := strconv.Atoi(r.FormValue("event_id"))
+	qty, errQty := strconv.Atoi(r.FormValue("quantity"))
 
 	data := ReservationPageData{
 		EventID:  eventID,
-		Name:     name,
-		Email:    email,
+		Name:     r.FormValue("name"),
+		Email:    r.FormValue("email"),
 		Quantity: qty,
 	}
 
-	// validação básica
 	if errID != nil || eventID <= 0 {
 		data.Error = "Evento inválido"
-		h.renderTemplate(w, "reservation.html", data)
+		h.renderReservation(w, data)
 		return
 	}
 
-	if errQty != nil || qty <= 0 {
-		data.Error = "Quantidade inválida"
-		h.renderTemplate(w, "reservation.html", data)
-		return
-	}
+	var eventName string
+	err := h.db.QueryRow(
+		"SELECT name FROM events WHERE id = $1",
+		eventID,
+	).Scan(&eventName)
 
-	if qty <= 0 || qty > 10 {
-		data.Error = "Você pode reservar no máximo 10 vagas"
-		h.renderTemplate(w, "reservation.html", data)
-		return
-	}
-
-	if name == "" {
-		data.Error = "Nome é obrigatório"
-		h.renderTemplate(w, "reservation.html", data)
-		return
-	}
-
-	if email == "" || !strings.Contains(email, "@") {
-		data.Error = "Email inválido"
-		h.renderTemplate(w, "reservation.html", data)
-		return
-	}
-
-	req := dto.ReserveRequest{
-		EventID:  eventID,
-		Name:     name,
-		Email:    email,
-		Quantity: qty,
-	}
-
-	err := h.reserveUC.Execute(req)
 	if err != nil {
+		data.Error = "Evento não encontrado"
+		h.renderReservation(w, data)
+		return
+	}
+	data.EventName = eventName
 
+	if errQty != nil || qty <= 0 || qty > 10 {
+		data.Error = "Quantidade inválida"
+		h.renderReservation(w, data)
+		return
+	}
+
+	if data.Name == "" {
+		data.Error = "Nome é obrigatório"
+		h.renderReservation(w, data)
+		return
+	}
+
+	if data.Email == "" || !strings.Contains(data.Email, "@") {
+		data.Error = "Email inválido"
+		h.renderReservation(w, data)
+		return
+	}
+
+	err = h.reserveUC.Execute(dto.ReserveRequest{
+		EventID:   eventID,
+		EventName: eventName,
+		Name:      data.Name,
+		Email:     data.Email,
+		Quantity:  qty,
+	})
+
+	if err != nil {
 		var appErr *coreErr.AppError
-
 		if errors.As(err, &appErr) {
 			data.Error = appErr.Message
-
-			// mantém dados preenchidos
-			data.EventID = eventID
-			data.Name = name
-			data.Email = email
-			data.Quantity = qty
-
-			h.renderTemplate(w, "reservation", data)
+			h.renderReservation(w, data)
 			return
 		}
 		http.Error(w, "erro interno", http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/evento?id="+strconv.Itoa(eventID), http.StatusSeeOther)
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page: "reservation_pending",
+		Title: "Reserva pendente • SofReserve",
+		Data: data,
+	})
+}
+
+func (h *Handler) renderReservation(w http.ResponseWriter, data ReservationPageData) {
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page: "reservation_form",
+		Title: fmt.Sprintf("%s • Reservar • SofReserve", data.EventName),
+		Data: data,
+	})
 }
 
 func (h *Handler) ReservationPage(w http.ResponseWriter, r *http.Request) {
-	eventIDStr := r.URL.Query().Get("event_id")
-	eventID, _ := strconv.Atoi(eventIDStr)
+	eventID, _ := strconv.Atoi(r.URL.Query().Get("event_id"))
 
-	data := ReservationPageData{
-		EventID: eventID,
+	var eventName string
+	err := h.db.QueryRow(
+		"SELECT name FROM events WHERE id = $1",
+		eventID,
+	).Scan(&eventName)
+
+	if err != nil {
+		http.NotFound(w, r)
+		return
 	}
 
-	h.renderTemplate(w, "reservation.html", data)
+	h.renderReservation(w, ReservationPageData{
+		EventID:   eventID,
+		EventName: eventName,
+	})
 }
+
+//
+// =====================
+// CONFIRM
+// =====================
+//
 
 func (h *Handler) ConfirmReservation(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 
 	output, err := h.confirmUC.Execute(token)
 	if err != nil {
-
 		var appErr *coreErr.AppError
 		if errors.As(err, &appErr) {
-			h.renderTemplate(w, "confirm.html", map[string]interface{}{
-				"Status":  "error",
-				"Message": appErr.Message,
+			h.renderTemplate(w, "layout", RenderTemplateData{
+				Page: "reservation_error",
+				Title: "Erro na confirmação • SofReserve",
+				Data: map[string]any{
+					"Message": appErr.Message,
+					"Status":  "error",
+				},
 			})
 			return
 		}
-
 		http.Error(w, "erro interno", http.StatusInternalServerError)
 		return
 	}
 
-	h.renderTemplate(w, "confirm.html", output)
+	var eventName string
+
+	err = h.db.QueryRow(
+		"SELECT name FROM events WHERE id = $1",
+		output.EventID,
+	).Scan(&eventName)
+
+	if err != nil {
+		http.Error(w, "erro ao carregar evento", http.StatusInternalServerError)
+		return
+	}
+
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page: "reservation_confirmed",
+		Title: "Reserva confirmada • SofReserve",
+		Data: map[string]any{
+			"EventName": eventName,
+			"Name":      output.Name,
+			"Email":     output.Email,
+			"Quantity":  output.Quantity,
+			"Token":     output.Token,
+			"Message":   output.Message,
+			"Status":    output.Status,
+		},
+	})
 }
 
 func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
@@ -367,16 +436,15 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	var name, email string
-	var quantity, eventID int
+	var eventID int
 	var status string
 
 	err = tx.QueryRow(`
-		SELECT name, email, quantity, event_id, status
+		SELECT event_id, status
 		FROM reservations
 		WHERE token = $1
 		FOR UPDATE
-	`, token).Scan(&name, &email, &quantity, &eventID, &status)
+	`, token).Scan(&eventID, &status)
 
 	if err != nil {
 		http.Error(w, "reserva não encontrada", http.StatusNotFound)
@@ -387,14 +455,17 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 	if entity.ReservationStatus(status) == entity.StatusCanceled {
 		_ = tx.Commit()
 
-		h.renderTemplate(w, "cancel.html", map[string]interface{}{
-			"Message": "Essa reserva já foi cancelada.",
-			"EventID": eventID,
+		h.renderTemplate(w, "layout", RenderTemplateData{
+			Page: "reservation_cancel",
+			Title: "Reserva cancelada • SofReserve",
+			Data: map[string]any{
+				"Message": "Essa reserva já foi cancelada.",
+				"EventID": eventID,
+			},
 		})
 		return
 	}
 
-	// cancela
 	_, err = tx.Exec(`
 		UPDATE reservations
 		SET status = $1
@@ -411,17 +482,20 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.renderTemplate(w, "cancel.html", map[string]interface{}{
-		"Message": "Reserva cancelada com sucesso.",
-		"EventID": eventID,
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page: "reservation_cancel",
+		Title: "Reserva cancelada • SofReserve",
+		Data: map[string]any{
+			"Message": "Reserva cancelada com sucesso.",
+			"EventID": eventID,
+		},
 	})
 }
 
-func (h *Handler) renderTemplate(w http.ResponseWriter, name string, data interface{}) {
+func (h *Handler) renderTemplate(w http.ResponseWriter, name string, data RenderTemplateData) {
 	t := template.Must(template.ParseGlob("templates/*.html"))
 
-	err := t.ExecuteTemplate(w, name, data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)	
+	if err := t.ExecuteTemplate(w, name, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

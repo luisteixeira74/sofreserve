@@ -24,6 +24,8 @@ type ConfirmOutput struct {
 	Quantity int
 	EventID  int
 	Status   string
+	Message  string
+	Token    string
 }
 
 func (uc *ConfirmReservationUseCase) Execute(token string) (*ConfirmOutput, error) {
@@ -76,11 +78,13 @@ func (uc *ConfirmReservationUseCase) Execute(token string) (*ConfirmOutput, erro
 		_ = tx.Commit()
 
 		return &ConfirmOutput{
+			Message:  "Reserva confirmada com sucesso!",
 			Name:     name,
 			Email:    email,
 			Quantity: quantity,
 			EventID:  eventID,
 			Status:   string(entity.StatusConfirmed),
+			Token:    token,
 		}, nil
 	}
 
@@ -150,10 +154,12 @@ func (uc *ConfirmReservationUseCase) Execute(token string) (*ConfirmOutput, erro
 	// OUTPUT
 	// =====================
 	return &ConfirmOutput{
+		Message:  "Reserva confirmada com sucesso!",
 		Name:     name,
 		Email:    email,
 		Quantity: quantity,
 		EventID:  eventID,
 		Status:   string(entity.StatusConfirmed),
+		Token:    token,
 	}, nil
 }

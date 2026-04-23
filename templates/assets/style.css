@@ -1,5 +1,16 @@
 @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&display=swap");
 
+/* RESET */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* =========================
+   VARIABLES
+========================= */
+
 :root {
   --soft-beige: #ddcaa2;
   --sage: #aebea3;
@@ -7,9 +18,9 @@
   --alert-red: #d83957;
   --steel: #4e5c69;
 
-  /* novos tons escuros do sistema */
   --bg-1: #3f4a54;
   --bg-2: #2f3942;
+
   --card: rgba(78, 92, 105, 0.65);
   --border: rgba(174, 190, 163, 0.18);
 }
@@ -19,7 +30,6 @@
 ========================= */
 
 body.app {
-  margin: 0;
   font-family:
     ui-sans-serif,
     system-ui,
@@ -48,25 +58,14 @@ body.app {
   border-bottom: 1px solid var(--border);
 }
 
-/* =========================
-   LOGO
-========================= */
-
 .logo {
   font-family: "Orbitron", sans-serif;
   font-size: 22px;
   font-weight: 700;
   letter-spacing: 2px;
-
-  color: var(--soft-beige);
-
   text-transform: uppercase;
 
-  display: inline-block;
-
-  text-shadow:
-    0 0 6px rgba(221, 202, 162, 0.25),
-    0 0 14px rgba(78, 92, 105, 0.35);
+  color: var(--soft-beige);
 }
 
 .logo::after {
@@ -81,19 +80,16 @@ body.app {
     var(--dust-rose),
     var(--sage)
   );
-
-  border-radius: 2px;
 }
 
-/* =========================
-   NAV
-========================= */
+/* NAV */
 
 .nav a {
   margin-left: 14px;
   text-decoration: none;
-  color: rgba(221, 202, 162, 0.75);
   font-size: 14px;
+
+  color: rgba(221, 202, 162, 0.75);
 }
 
 .nav a:hover {
@@ -101,159 +97,367 @@ body.app {
 }
 
 /* =========================
-   LAYOUT
+   LAYOUT (ajustado)
 ========================= */
 
 .container {
-  max-width: 520px;
+  width: 100%;
+  max-width: 520px; /* mais mobile-friendly */
   margin: 40px auto;
   padding: 0 16px;
 }
 
 /* =========================
-   CARD
+   CARD (BASE)
 ========================= */
 
-.card {
+.card,
+.terminal-card {
   background: var(--card);
-
   border: 1px solid var(--border);
+  border-radius: 12px;
 
-  border-radius: 14px;
+  padding: 20px;
 
-  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  width: 100%;
 
-  backdrop-filter: blur(12px);
-}
+  /* NOVO: evita layout pulando */
+  min-height: 420px;
 
-/* =========================
-   TITLES
-========================= */
-
-.title {
-  font-size: 22px;
-  font-weight: 700;
-
-  color: var(--soft-beige);
-
-  margin-bottom: 16px;
-}
-
-.title.sci-fi {
-  font-family: "Orbitron", sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-
-  text-shadow: 0 0 8px rgba(174, 190, 163, 0.25);
-}
-
-.subtitle {
-  font-size: 13px;
-  color: rgba(221, 202, 162, 0.65);
-
-  margin-bottom: 20px;
-}
-
-/* =========================
-   FORM
-========================= */
-
-.form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  justify-content: center;
+}
+
+/* HEADER CARD */
+
+.terminal-header {
+  font-weight: 600;
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+
+/* BODY */
+
+.terminal-body {
+  font-size: 18px;
+  line-height: 1.7;
+
+  /* NOVO: mais respiro */
+  padding-top: 10px;
+}
+
+/* =========================
+   FORM (melhorado)
+========================= */
+
+.form,
+.form-terminal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* mais espaço */
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .field label {
   font-size: 13px;
   color: rgba(221, 202, 162, 0.8);
-  margin-bottom: 6px;
-  display: block;
 }
 
 .field input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px; /* mais confortável */
 
   background: rgba(47, 57, 66, 0.9);
-
-  border: 1px solid rgba(174, 190, 163, 0.2);
-
+  border: 1px solid rgba(174, 190, 163, 0.25);
   border-radius: 10px;
 
   color: var(--soft-beige);
 
   outline: none;
-
   font-size: 14px;
 }
 
 .field input:focus {
   border-color: var(--sage);
-  box-shadow: 0 0 0 3px rgba(174, 190, 163, 0.15);
-}
-
-small {
-  font-size: 11px;
-  color: rgba(221, 202, 162, 0.5);
+  box-shadow: 0 0 0 3px rgba(174, 190, 163, 0.18);
 }
 
 /* =========================
-   BUTTON
+   BUTTONS
 ========================= */
 
 .btn-primary {
-  margin-top: 8px;
+  background: var(--sage);
+  color: #1c1917;
 
-  background: var(--alert-red);
-  color: var(--soft-beige);
-
-  border: 1px solid rgba(78, 92, 105, 0.4);
+  border: 1px solid rgba(0, 0, 0, 0.2);
 
   padding: 12px;
-
   border-radius: 10px;
 
   font-weight: 600;
-
   cursor: pointer;
 
-  transition: 0.2s ease;
+  width: 100%; /* padrão mobile */
 
-  box-shadow: 0 6px 18px rgba(216, 57, 87, 0.25);
+  transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
-  background: var(--dust-rose);
+  background: #96a88c;
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+
+.btn-terminal {
+  display: inline-block;
+  width: 100%;
+
+  padding: 12px;
+
+  background: rgba(174, 190, 163, 0.12);
+  border: 1px solid rgba(174, 190, 163, 0.25);
+
+  border-radius: 10px;
+
+  color: var(--soft-beige);
+  font-weight: 600;
+
+  text-align: center;
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.btn-terminal:hover {
+  background: rgba(174, 190, 163, 0.18);
+  border-color: var(--sage);
 }
 
 /* =========================
-   ERROR
+   ERROR E SUCCESS
 ========================= */
 
 .error {
-  background: rgba(216, 57, 87, 0.12);
-
-  border: 1px solid rgba(216, 57, 87, 0.35);
-
+  background: rgba(216, 57, 87, 0.18);
+  border: 1px solid rgba(216, 57, 87, 0.5);
   color: var(--alert-red);
 
   padding: 10px 12px;
-
   border-radius: 10px;
 
   font-size: 13px;
 
   margin-bottom: 12px;
-
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
-.error::before {
-  content: "⚠";
+.success {
+  background: rgba(174, 190, 163, 0.18); /* sage suave */
+  border: 1px solid rgba(174, 190, 163, 0.4);
+  color: var(--sage);
+
+  padding: 10px 12px;
+  border-radius: 10px;
+
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+/* =========================
+   ONBOARDING (fix layout)
+========================= */
+
+.onboarding-body {
+  min-height: 260px; /* evita pulo */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.step {
+  opacity: 1;
+  transform: translateY(10px);
+  transition: 0.3s ease;
+
+  margin-bottom: 14px;
+}
+
+.step.active {
+  transform: translateY(0);
+}
+
+.step.hidden {
+  display: none;
+}
+
+.step-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.step-desc {
+  font-size: 16px;
+  opacity: 0.85;
+  line-height: 1.6;
+}
+
+.muted {
+  font-size: 15px;
+  color: #aaa;
+}
+
+/* =========================
+   PROGRESS
+========================= */
+
+.progress-container {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.progress-step {
+  flex: 1;
+  height: 8px;
+
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+}
+
+.progress-step.active {
+  background: var(--dust-rose);
+  box-shadow: 0 0 8px rgba(185, 116, 121, 0.4);
+}
+
+.progress-bar {
+  width: 100%;
+  background: #2a2a2a; /* ou o tom que você já usa */
+  border-radius: 8px;
+  overflow: hidden;
+  height: 28px; /* 👈 AQUI */
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.9);
+  transition: width 0.3s ease;
+}
+
+.terminal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.progress-ascii {
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--sage);
+}
+
+/* cores por nível */
+.progress-fill.low {
+  background: #7aa892; /* sage mais forte */
+}
+
+.progress-fill.medium {
+  background: #c49a6c; /* bege quente */
+}
+
+.progress-fill.high {
+  background: #b97479; /* seu dust-rose 🔥 */
+}
+
+.progress-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -40%;
+  height: 100%;
+  width: 30%;
+
+  background: rgba(255, 255, 255, 0.15);
+  transform: skewX(-20deg);
+
+  pointer-events: none;
+  animation: shimmer 6s infinite;
+}
+
+.progress-text {
+  font-size: 13px;
+  margin-top: 4px;
+  opacity: 0.8;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -40%;
+    opacity: 0;
+  }
+
+  80% {
+    left: -40%;
+    opacity: 0;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    left: 120%;
+    opacity: 0;
+  }
+}
+
+.progress-label {
+  position: absolute;
+  right: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1c1917;
+}
+
+.message {
+  padding: 10px 12px;
+  border-radius: 10px;
   font-size: 14px;
+  margin-top: 12px;
+}
+
+/* SUCCESS */
+.success {
+  background: rgba(174, 190, 163, 0.18); /* sage suave */
+  border: 1px solid rgba(174, 190, 163, 0.4);
+  color: var(--sage);
+}
+
+/* ERROR */
+.error {
+  background: rgba(216, 57, 87, 0.18);
+  border: 1px solid rgba(216, 57, 87, 0.5);
+  color: var(--alert-red);
 }

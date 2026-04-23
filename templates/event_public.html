@@ -1,0 +1,28 @@
+{{define "event_public"}} {{with .Data}}
+
+<div class="terminal-card">
+  <div class="terminal-header">{{$.Title}}</div>
+
+  <div class="terminal-body">
+    <p>> Evento: {{.Name}}</p>
+    <p>> Vagas: {{.TotalSeats}}</p>
+    <p>> Ocupação: {{.Reserved}} / {{.TotalSeats}}</p>
+    <p>> Disponíveis: {{.Available}}</p>
+
+    <br />
+
+    {{if .IsClosed}}
+    <p class="closed">EVENTO ENCERRADO</p>
+
+    {{else if le .Available 0}}
+    <p class="full">EVENTO ESGOTADO</p>
+
+    {{else}}
+    <a href="/reservation?event_id={{.ID}}" class="btn-terminal">
+      [ Faça sua reserva ]
+    </a>
+    {{end}}
+  </div>
+</div>
+
+{{end}} {{end}}

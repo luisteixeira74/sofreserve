@@ -8,7 +8,8 @@ CREATE TABLE events (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     total_seats INT NOT NULL,
-    ends_at TIMESTAMP NOT NULL
+    ends_at TIMESTAMP NOT NULL,
+    public_id TEXT
 );
 
 -- =====================

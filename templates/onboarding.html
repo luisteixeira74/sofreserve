@@ -1,101 +1,80 @@
 {{ define "onboarding" }}
 
-<h1 class="title sci-fi">Conheça o SOF_RESERVE</h1>
-      <!-- PROGRESSO -->
-      <div class="flex gap-2 mb-6">
-        <div class="h-2 flex-1 rounded bg-gray-300" id="bar1"></div>
-        <div class="h-2 flex-1 rounded bg-gray-300" id="bar2"></div>
-        <div class="h-2 flex-1 rounded bg-gray-300" id="bar3"></div>
-      </div>
+<div class="terminal-card onboarding">
+  <div class="terminal-header">{{.Title}}</div>
 
-      <!-- STEP 1 -->
-      <div class="step transition-all duration-500" id="step1">
-        <h1 class="text-xl font-bold mb-2 sci-fi">Crie eventos</h1>
-        <p class="text-gray-600 sci-fi">
-          Crie um Evento e o Número de vagas disponíveis.
-        </p>
-      </div>
-
-      <!-- STEP 2 -->
-      <div class="step hidden opacity-0 transition-all duration-500" id="step2">
-        <h1 class="text-xl font-bold mb-2">Receba reservas</h1>
-        <p class="text-gray-600 sci-fi">
-          Usuários reservarm e confirmam as vagas para o evento criado por você.
-        </p>
-      </div>
-
-      <!-- STEP 3 -->
-      <div class="step hidden opacity-0 transition-all duration-500" id="step3">
-        <h1 class="text-xl font-bold mb-2 sci-fi">Acompanhe em tempo real</h1>
-        <p class="text-gray-600">
-          Veja quantas vagas foram preenchidas e o percentual de ocupação em tempo real.
-        </p>
-      </div>
-
-      <!-- BOTÕES -->
-      <div class="mt-6 flex justify-between items-center">
-        <div class="mt-6 flex justify-between items-center">
-          <button
-            id="nextBtn"
-            class="sci-fi bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Avançar
-          </button>
-
-          <a
-            id="finalBtn"
-            href="/create-event/form"
-            class="hidden sci-fi bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-          >
-            Criar meu primeiro Evento
-          </a>
-        </div>
-      </div>
+  <div class="terminal-body onboarding-body">
+    <!-- PROGRESSO -->
+    <div class="progress-container">
+      <div class="progress-step" id="bar1"></div>
+      <div class="progress-step" id="bar2"></div>
+      <div class="progress-step" id="bar3"></div>
     </div>
 
-    <script>
-      let current = 1;
+    <br />
 
-      function showStep(step) {
-        for (let i = 1; i <= 3; i++) {
-          const el = document.getElementById("step" + i);
-          const bar = document.getElementById("bar" + i);
+    <!-- STEP 1 -->
+    <div class="step" id="step1">
+      <p class="step-title">Crie um Evento</p>
+      <p class="step-desc">Defina a quantidade de vagas e data limite.</p>
+    </div>
 
-          if (i === step) {
-            el.classList.remove("hidden", "opacity-0");
-            el.classList.add("opacity-100");
+    <!-- STEP 2 -->
+    <div class="step hidden" id="step2">
+      <p class="step-title">Receba Reservas</p>
+      <p class="step-desc">
+        Compartilhe o link do evento para receber reservas. Usuários confirmam
+        via e-mail.
+      </p>
+    </div>
 
-            bar.classList.add("bg-blue-600");
-            bar.classList.remove("bg-gray-300");
-          } else {
-            el.classList.add("hidden", "opacity-0");
-            el.classList.remove("opacity-100");
+    <!-- STEP 3 -->
+    <div class="step hidden" id="step3">
+      <p class="step-title">Acompanhe em tempo real</p>
+      <p class="step-desc">
+        Veja ocupação, vagas restantes e status do evento em tempo real.
+      </p>
+    </div>
 
-            bar.classList.remove("bg-blue-600");
-            bar.classList.add("bg-gray-300");
-          }
-        }
+    <br />
 
-        const nextBtn = document.getElementById("nextBtn");
-        const finalBtn = document.getElementById("finalBtn");
+    <!-- CTA -->
+    <div class="onboarding-actions">
+      <a href="/events/new" class="btn-terminal"> CRIAR MEU EVENTO </a>
+    </div>
+  </div>
+</div>
 
-        if (step === 3) {
-          nextBtn.classList.add("hidden");
-          finalBtn.classList.remove("hidden");
-        } else {
-          nextBtn.classList.remove("hidden");
-          finalBtn.classList.add("hidden");
-        }
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    let current = 1;
+    const steps = 3;
+
+    function showStep(step) {
+      for (let i = 1; i <= steps; i++) {
+        const el = document.getElementById("step" + i);
+        const bar = document.getElementById("bar" + i);
+
+        if (el) el.classList.toggle("hidden", i !== step);
+        if (bar) bar.classList.toggle("active", i <= step);
       }
+    }
 
-      document.getElementById("nextBtn").addEventListener("click", () => {
-        if (current < 3) {
-          current++;
+    function startFlow() {
+      setTimeout(() => {
+        current = 2;
+        showStep(current);
+
+        setTimeout(() => {
+          current = 3;
           showStep(current);
-        }
-      });
+        }, 2200);
+      }, 1800);
+    }
 
-      showStep(current);
-    </script>
+    showStep(current);
+    startFlow();
+  });
+</script>
 
 {{ end }}

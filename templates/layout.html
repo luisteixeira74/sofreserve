@@ -4,29 +4,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sof_Reserve</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>SofReserve</title>
     <link rel="stylesheet" href="/assets/style.css" />
   </head>
 
   <body class="app">
     <!-- HEADER -->
     <header class="header">
-      <div class="logo">Sof_Reserve</div>
+      <div class="logo">Sof/Reserve</div>
       <nav class="nav">
         <a href="/onboarding">Início</a>
-        <a href="/events">Eventos</a>
-        <a href="/create-event/form">Criar evento</a>
+        <a href="/events/new">Criar evento</a>
       </nav>
     </header>
 
     <!-- MAIN -->
     <main class="container">
-      {{if eq .Page "create_event"}} {{template "create_event" .}} {{else if eq
-      .Page "onboarding"}} {{template "onboarding" .}} {{else if eq .Page
-      "event"}} {{template "event" .}} {{else if eq .Page "reservation"}}
-      {{template "reservation" .}} {{end}}
+      {{if eq .Page "onboarding"}} {{template "onboarding" .}} {{else if eq
+      .Page "event_create"}} {{template "event_create" .}} {{else if eq .Page
+      "event_dashboard"}} {{template "event_dashboard" .}} {{else if eq .Page
+      "reservation_form"}} {{template "reservation_form" .}} {{else if eq .Page
+      "reservation_confirmed"}} {{template "reservation_confirmed" .}} {{else if
+      eq .Page "reservation_cancel"}} {{template "reservation_cancel" .}} {{else
+      if eq .Page "reservation_pending"}} {{template "reservation_pending" .}}
+      {{else if eq .Page "event_public"}} {{template "event_public" .}}{{end}}
     </main>
   </body>
 </html>

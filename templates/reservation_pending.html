@@ -1,0 +1,26 @@
+{{define "reservation_pending"}}
+
+<div class="terminal-card">
+  <div class="terminal-header">{{.Title}}</div>
+
+  <div class="terminal-subheader">> EVENTO: {{.Data.EventName}}</div>
+
+  <div class="terminal-body">
+    <p>> STATUS: Pendente</p>
+
+    <br />
+
+    <p>> NOME: {{.Data.Name}}</p>
+    <p>> EMAIL: {{.Data.Email}}</p>
+    <p>> QUANTIDADE: {{.Data.Quantity}}</p>
+
+    <br />
+
+    <p>> Enviamos um link de confirmação para seu e-mail.</p>
+    <p class="muted font-medium">
+      A reserva só será garantida após confirmação.
+    </p>
+  </div>
+</div>
+
+{{end}}

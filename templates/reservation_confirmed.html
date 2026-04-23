@@ -1,0 +1,23 @@
+{{ define "reservation_confirmed" }}
+<div class="terminal-card">
+  <div class="terminal-header">{{.Title}}</div>
+
+  <div class="terminal-body">
+    <p>> Evento: {{.Data.Name}}</p>
+    <p>> E-mail: {{.Data.Email}}</p>
+    <p>> Quantidade de vagas: {{.Data.Quantity}}</p>
+
+    {{if eq .Data.Status "confirmed"}}
+    <p class="success">{{else}}</p>
+
+    <p class="error">{{end}} {{.Data.Message}}</p>
+
+    <br />
+
+    <a href="/cancel?token={{.Data.Token}}" class="btn-terminal">
+      [ Cancelar Reserva ]
+    </a>
+  </div>
+</div>
+
+{{ end }}

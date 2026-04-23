@@ -1,0 +1,53 @@
+{{define "event_dashboard"}}
+<div class="terminal-card">
+  <div class="terminal-header">{{.Title}}</div>
+
+  <div class="terminal-body">
+    <p>> Evento: {{.Data.Name}}</p>
+    <p>> Status: {{if .Data.IsClosed}}Closed{{else}}Open{{end}}</p>
+    <p>> Ocupação: {{.Data.Reserved}} / {{.Data.TotalSeats}}</p>
+
+    {{if gt .Data.Percentage 0}}
+    <div class="progress-bar">
+      <div
+        class="progress-fill {{if lt .Data.Percentage 50}}low{{else if lt .Data.Percentage 80}}medium{{else}}high{{end}}"
+        style="width: {{.Data.Percentage}}%"
+      >
+        {{.Data.Percentage}}%
+      </div>
+    </div>
+    {{end}} {{if .Data.IsClosed}}
+    <p class="closed">EVENTO ENCERRADO</p>
+    {{else}} {{if .Data.ShowAlert}}
+    <p class="time">⏳ {{.Data.RemainingText}}</p>
+    <p class="alert">⚠ reservas encerram em breve</p>
+    {{end}}
+
+    <br />
+
+    <p class="muted">
+      > Link do evento:
+      <input
+        type="text"
+        value="http://localhost:8080/e/{{.Data.PublicID}}"
+        readonly
+        class="input-link"
+      />
+    </p>
+
+    <br />
+
+    <a
+      href="https://wa.me/?text=Acesse o evento: http://localhost:8080/e/{{.Data.PublicID}}"
+      target="_blank"
+      class="btn-terminal"
+    >
+      [ COMPARTILHAR NO WHATSAPP ]
+    </a>
+
+    {{end}}
+
+    <br />
+  </div>
+</div>
+{{end}}
