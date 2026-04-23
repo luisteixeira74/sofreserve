@@ -50,6 +50,31 @@ type RenderTemplateData struct {
 	Data any
 }
 
+type ReservationConfirmedView struct {
+	EventName string
+	Name      string
+	Email     string
+	Quantity  int
+	Token     string
+	Message   string
+	Status    string
+}
+
+type ReservationErrorView struct {
+	Message string
+	Status  string
+}
+
+type ReservationCancelView struct {
+	Message string
+	EventID int
+}
+
+type EventCreateView struct {
+	Name  string
+	Error string
+}
+
 func (h *Handler) HealthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
@@ -58,14 +83,14 @@ func (h *Handler) HealthHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) OnboardingPage(w http.ResponseWriter, r *http.Request) {
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page: "onboarding",
-		Title: "Onboarding • SofReserve",
+		Title: buildTitle("Onboarding", ""),
 	})
 }
 
 func (h *Handler) CreateEventPage(w http.ResponseWriter, r *http.Request) {
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page: "event_create",
-		Title: "Criar evento • SofReserve",
+		Title: buildTitle("Criar evento", ""),
 	})
 }
 
@@ -82,10 +107,10 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 	if name == "" || err != nil || totalSeats <= 0 || totalSeats > 1000 {
 		h.renderTemplate(w, "layout", RenderTemplateData{
 			Page: "event_create",
-			Title: "Criar evento • SofReserve",
-			Data: map[string]any{
-				"Name":  name,
-				"Error": "Dados inválidos",
+			Title: buildTitle("Criar evento", ""),
+			Data: EventCreateView{
+				Name:  name,
+				Error: "Dados inválidos",
 			},
 		})
 		return
@@ -95,9 +120,10 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.renderTemplate(w, "layout", RenderTemplateData{
 			Page: "event_create",
-			Title: "Criar evento • SofReserve",
-			Data: map[string]any{
-				"Error": "Data inválida",
+			Title: buildTitle("Criar evento", ""),
+			Data: EventCreateView{
+				Name:  name,
+				Error: "Data inválida",
 			},
 		})
 		return
@@ -209,7 +235,7 @@ func (h *Handler) EventPage(w http.ResponseWriter, r *http.Request) {
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page: "event_dashboard",
-		Title: fmt.Sprintf("%s • Dashboard • SofReserve", name),
+		Title: buildTitle("Dashboard", name),
 		Data: view,
 	})
 }
@@ -249,7 +275,7 @@ func (h *Handler) EventPublicPage(w http.ResponseWriter, r *http.Request) {
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page: "event_public",
-		Title: fmt.Sprintf("%s • Reservas • SofReserve", name),
+		Title: buildTitle("Reservas", ""),
 		Data: view,
 	})
 }
@@ -334,7 +360,7 @@ func (h *Handler) CreateReservationHandler(w http.ResponseWriter, r *http.Reques
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page: "reservation_pending",
-		Title: "Reserva pendente • SofReserve",
+		Title: buildTitle("Reserva pendente", ""),
 		Data: data,
 	})
 }
@@ -342,7 +368,7 @@ func (h *Handler) CreateReservationHandler(w http.ResponseWriter, r *http.Reques
 func (h *Handler) renderReservation(w http.ResponseWriter, data ReservationPageData) {
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page: "reservation_form",
-		Title: fmt.Sprintf("%s • Reservar • SofReserve", data.EventName),
+		Title: buildTitle("Reservar", data.EventName),
 		Data: data,
 	})
 }
@@ -382,10 +408,10 @@ func (h *Handler) ConfirmReservation(w http.ResponseWriter, r *http.Request) {
 		if errors.As(err, &appErr) {
 			h.renderTemplate(w, "layout", RenderTemplateData{
 				Page: "reservation_error",
-				Title: "Erro na confirmação • SofReserve",
-				Data: map[string]any{
-					"Message": appErr.Message,
-					"Status":  "error",
+				Title: buildTitle("Erro na confirmação", ""),
+				Data: ReservationErrorView{
+					Message: appErr.Message,
+					Status:  "error",
 				},
 			})
 			return
@@ -408,15 +434,15 @@ func (h *Handler) ConfirmReservation(w http.ResponseWriter, r *http.Request) {
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page: "reservation_confirmed",
-		Title: "Reserva confirmada • SofReserve",
-		Data: map[string]any{
-			"EventName": eventName,
-			"Name":      output.Name,
-			"Email":     output.Email,
-			"Quantity":  output.Quantity,
-			"Token":     output.Token,
-			"Message":   output.Message,
-			"Status":    output.Status,
+		Title: "Reserva confirmada • Sof/Reserve",
+		Data: ReservationConfirmedView{
+			EventName: eventName,
+			Name:      output.Name,
+			Email:     output.Email,
+			Quantity:  output.Quantity,
+			Token:     output.Token,
+			Message:   output.Message,
+			Status:    output.Status,
 		},
 	})
 }
@@ -457,10 +483,10 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 
 		h.renderTemplate(w, "layout", RenderTemplateData{
 			Page: "reservation_cancel",
-			Title: "Reserva cancelada • SofReserve",
-			Data: map[string]any{
-				"Message": "Essa reserva já foi cancelada.",
-				"EventID": eventID,
+			Title: buildTitle("Reserva cancelada", ""),
+			Data: ReservationCancelView{
+				Message: "Essa reserva já foi cancelada.",
+				EventID: eventID,
 			},
 		})
 		return
@@ -484,10 +510,10 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page: "reservation_cancel",
-		Title: "Reserva cancelada • SofReserve",
-		Data: map[string]any{
-			"Message": "Reserva cancelada com sucesso.",
-			"EventID": eventID,
+		Title: buildTitle("Reserva cancelada", ""),
+		Data: ReservationCancelView{
+			Message: "Reserva cancelada com sucesso.",
+			EventID: eventID,
 		},
 	})
 }
@@ -498,4 +524,14 @@ func (h *Handler) renderTemplate(w http.ResponseWriter, name string, data Render
 	if err := t.ExecuteTemplate(w, name, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func buildTitle(page string, context string) string {
+	const appName = "SofReserve"
+
+	if context != "" {
+		return fmt.Sprintf("%s • %s • %s", context, page, appName)
+	}
+
+	return fmt.Sprintf("%s • %s", page, appName)
 }

@@ -1,8 +1,12 @@
 {{ define "reservation_error" }}
 
 <div class="terminal-card">
-  <div class="terminal-header">Erro na reserva • SofReserve</div>
-  <div class="terminal-subheader">> Evento: {{.EventTitle}}</div>
+  <div class="terminal-header">{{.Title}}</div>
+  <p>
+    <span class="prompt">&gt;</span>
+    <span class="label">Evento:</span>
+    <span class="value">{{.EventTitle}}</span>
+  </p>
 
   <div class="terminal-body">
     <p class="error">> {{.Message}}</p>

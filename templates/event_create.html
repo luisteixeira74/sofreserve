@@ -11,21 +11,46 @@
 
     <form method="POST" action="/events" class="form">
       <div class="field">
-        <label>> Nome do evento</label>
-        <input type="text" name="name" />
+        <span class="prompt">&gt;</span>
+        <span class="label">Nome do evento:</span>
+        <input
+          class="value"
+          type="text"
+          name="name"
+          placeholder="Nome do evento"
+          value="{{with .Data}}{{.Name}}{{end}}"
+        />
       </div>
 
       <div class="field">
-        <label>> Total de vagas</label>
-        <input type="number" name="total_seats" />
+        <span class="prompt">&gt;</span>
+        <span class="label">Total de vagas:</span>
+        <input
+          class="value"
+          type="number"
+          name="total_seats"
+          placeholder="Total de vagas"
+          value="{{with .Data}}{{.TotalSeats}}{{end}}"
+        />
       </div>
 
       <div class="field">
-        <label>> Data do evento (não aceita reservas nesta data)</label>
-        <input type="date" name="ends_at" />
+        <span class="prompt">&gt;</span>
+        <span class="label"
+          >Data do evento (não aceita reservas nesta data):</span
+        >
+        <input
+          class="value"
+          type="date"
+          name="ends_at"
+          placeholder="Data do evento"
+          value="{{with .Data}}{{.EndsAt}}{{end}}"
+        />
       </div>
 
-      <button class="btn-terminal">CRIAR EVENTO</button>
+      <button type="submit" class="btn-terminal" data-loading="true">
+        CRIAR EVENTO
+      </button>
     </form>
   </div>
 </div>

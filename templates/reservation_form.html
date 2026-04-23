@@ -6,8 +6,13 @@
   <div class="terminal-body">
     <div class="terminal-subheader">Faça abaixo sua reserva para o evento</div>
 
+    <p class="muted">
+      <span class="prompt">&gt;</span>
+      Evento: <strong>{{.Data.EventName}}</strong>
+    </p>
+
     {{if .Data.Error}}
-    <p class="error">> ERRO: {{.Data.Error}}</p>
+    <p class="error"><span class="prompt">&gt;</span> ERRO: {{.Data.Error}}</p>
     <br />
     {{end}}
 
@@ -15,29 +20,45 @@
       <input type="hidden" name="event_id" value="{{.Data.EventID}}" />
 
       <div class="field">
-        <label>> Nome</label>
-        <input type="text" name="name" value="{{.Data.Name}}" />
+        <span class="prompt">&gt;</span>
+        <span class="label">Nome:</span>
+        <input
+          type="text"
+          name="name"
+          placeholder="Seu nome"
+          value="{{.Data.Name}}"
+        />
       </div>
 
       <div class="field">
-        <label>> Email</label>
-        <input type="email" name="email" value="{{.Data.Email}}" />
+        <span class="prompt">&gt;</span>
+        <span class="label">Email:</span>
+        <input
+          type="email"
+          name="email"
+          placeholder="seu@email.com"
+          value="{{.Data.Email}}"
+        />
       </div>
 
       <div class="field">
-        <label>> Quantidade</label>
+        <span class="prompt">&gt;</span>
+        <span class="label">Quantidade:</span>
         <input
           type="number"
           name="quantity"
           min="1"
           max="10"
+          step="1"
           value="{{if gt .Data.Quantity 0}}{{.Data.Quantity}}{{else}}1{{end}}"
         />
       </div>
 
       <br />
 
-      <button class="btn-terminal">[ CONFIRMAR RESERVA ]</button>
+      <button type="submit" class="btn-terminal" data-loading="true">
+        [ CONFIRMAR RESERVA ]
+      </button>
     </form>
   </div>
 </div>

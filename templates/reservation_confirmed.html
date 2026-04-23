@@ -3,14 +3,25 @@
   <div class="terminal-header">{{.Title}}</div>
 
   <div class="terminal-body">
-    <p>> Evento: {{.Data.Name}}</p>
-    <p>> E-mail: {{.Data.Email}}</p>
-    <p>> Quantidade de vagas: {{.Data.Quantity}}</p>
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Evento:</span>
+      <span class="value">{{.Data.Name}}</span>
+    </p>
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">E-mail:</span>
+      <span class="value">{{.Data.Email}}</span>
+    </p>
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Quantidade:</span>
+      <span class="value">{{.Data.Quantity}}</span>
+    </p>
 
-    {{if eq .Data.Status "confirmed"}}
-    <p class="success">{{else}}</p>
-
-    <p class="error">{{end}} {{.Data.Message}}</p>
+    <p class="{{if eq .Data.Status "confirmed"}}success{{else}}error{{end}}">
+      {{.Data.Message}}
+    </p>
 
     <br />
 

@@ -3,9 +3,22 @@
   <div class="terminal-header">{{.Title}}</div>
 
   <div class="terminal-body">
-    <p>> Evento: {{.Data.Name}}</p>
-    <p>> Status: {{if .Data.IsClosed}}Closed{{else}}Open{{end}}</p>
-    <p>> Ocupação: {{.Data.Reserved}} / {{.Data.TotalSeats}}</p>
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label"> Evento: {{.Data.Name}}</span>
+    </p>
+
+    <p>
+      <span class="prompt">&gt;</span>
+      <span> Status: {{if .Data.IsClosed}}Closed{{else}}Open{{end}}</span>
+    </p>
+
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">
+        Ocupação: {{.Data.Reserved}} / {{.Data.TotalSeats}}</span
+      >
+    </p>
 
     {{if gt .Data.Percentage 0}}
     <div class="progress-bar">
@@ -19,19 +32,21 @@
     {{end}} {{if .Data.IsClosed}}
     <p class="closed">EVENTO ENCERRADO</p>
     {{else}} {{if .Data.ShowAlert}}
-    <p class="time">⏳ {{.Data.RemainingText}}</p>
-    <p class="alert">⚠ reservas encerram em breve</p>
+    <p class="alert">⏳ reservas encerram em breve</p>
+    {{end}} {{if lt .Available 5}}
+    <p class="alert">⚠ Restam poucas vagas!</p>
     {{end}}
 
     <br />
 
     <p class="muted">
-      > Link do evento:
+      <span class="prompt">&gt;</span>
+      <span class="label">Link do evento:</span>
       <input
-        type="text"
         value="http://localhost:8080/e/{{.Data.PublicID}}"
         readonly
         class="input-link"
+        onclick="this.select()"
       />
     </p>
 

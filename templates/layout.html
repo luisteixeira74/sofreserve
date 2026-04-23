@@ -11,7 +11,11 @@
   <body class="app">
     <!-- HEADER -->
     <header class="header">
-      <div class="logo">Sof/Reserve</div>
+      <div class="logo">
+        <span class="primary">&gt; SOF</span>/<span class="secondary"
+          >RESERVE</span
+        >
+      </div>
       <nav class="nav">
         <a href="/onboarding">Início</a>
         <a href="/events/new">Criar evento</a>
@@ -29,6 +33,7 @@
       if eq .Page "reservation_pending"}} {{template "reservation_pending" .}}
       {{else if eq .Page "event_public"}} {{template "event_public" .}}{{end}}
     </main>
+    <script src="/static/js/form.js"></script>
   </body>
 </html>
 {{ end }}

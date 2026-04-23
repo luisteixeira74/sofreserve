@@ -1,28 +1,53 @@
-{{define "event_public"}} {{with .Data}}
+{{define "event_public"}}
 
 <div class="terminal-card">
-  <div class="terminal-header">{{$.Title}}</div>
+  <div class="terminal-header">{{.Title}}</div>
 
   <div class="terminal-body">
-    <p>> Evento: {{.Name}}</p>
-    <p>> Vagas: {{.TotalSeats}}</p>
-    <p>> Ocupação: {{.Reserved}} / {{.TotalSeats}}</p>
-    <p>> Disponíveis: {{.Available}}</p>
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Evento:</span>
+      <span class="value">{{.Data.Name}}</span>
+    </p>
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Vagas:</span>
+      <span class="value">{{.Data.TotalSeats}}</span>
+    </p>
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Restantes:</span>
+      <span class="value">{{.Data.Available}}</span>
+    </p>
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Ocupação:</span>
+      <span class="value">{{.Data.Reserved}} / {{.Data.TotalSeats}}</span>
+    </p>
+
+    <div class="progress-bar">
+      <div
+        class="progress-fill {{if lt .Data.Percentage 50}}low{{else if lt .Data.Percentage 80}}medium{{else}}high{{end}}"
+        style="width: {{.Data.Percentage}}%"
+      >
+        {{.Data.Percentage}}%
+      </div>
+    </div>
 
     <br />
 
-    {{if .IsClosed}}
+    {{if .Data.IsClosed}}
     <p class="closed">EVENTO ENCERRADO</p>
 
-    {{else if le .Available 0}}
+    {{else if le .Data.Available 0}}
     <p class="full">EVENTO ESGOTADO</p>
 
     {{else}}
-    <a href="/reservation?event_id={{.ID}}" class="btn-terminal">
+    <a href="/reservation?event_id={{.Data.ID}}" class="btn-terminal">
       [ Faça sua reserva ]
     </a>
     {{end}}
   </div>
 </div>
 
-{{end}} {{end}}
+{{end}}
