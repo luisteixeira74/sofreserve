@@ -1,0 +1,34 @@
+{{ define "owner_dashboard" }}
+
+<div class="terminal-card">
+  <div class="terminal-header">Painel do organizador • SofReserve</div>
+
+  <div class="terminal-body">
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Evento:</span>
+      {{ .Data.EventName }}
+    </p>
+
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Total confirmado:</span>
+      {{ .Data.TotalConfirmed }} / {{ .Data.TotalSeats }}
+    </p>
+
+    <br />
+
+    {{ if .Data.Reservations }} {{ range .Data.Reservations }}
+    <div class="terminal-line">
+      <span class="prompt">&gt;</span>
+      {{ .Name }} — {{ .Email }} — {{ .Quantity }} vaga(s)
+    </div>
+    {{ end }} {{ else }}
+
+    <p class="muted">Nenhuma reserva confirmada até o momento.</p>
+
+    {{ end }}
+  </div>
+</div>
+
+{{ end }}

@@ -27,4 +27,6 @@ type ReservationRepository interface {
 	FindByTokenForUpdate(tx *sql.Tx, token string) (entity.Reservation, error)
 
 	UpdateStatus(tx *sql.Tx, id int, status string) error
+	
+	FindConfirmedByEventID(eventID int) ([]entity.Reservation, error)
 }

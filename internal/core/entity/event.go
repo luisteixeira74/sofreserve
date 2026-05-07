@@ -8,6 +8,8 @@ type Event struct {
 	TotalSeats int
 	EndsAt     time.Time
 	PublicID   string
+	OwnerToken     string
+	OrganizerEmail string
 }
 
 func CanTransition(from, to ReservationStatus) bool {

@@ -107,3 +107,51 @@ func (r *ReservationRepository) UpdateStatus(
 
 	return err
 }
+
+func (r *ReservationRepository) FindConfirmedByEventID(eventID int) ([]entity.Reservation, error) {
+	rows, err := r.db.Query(`
+		SELECT
+			id,
+			event_id,
+			name,
+			email,
+			quantity,
+			token,
+			status,
+			created_at
+		FROM reservations
+		WHERE event_id = $1
+		AND status = 'confirmed'
+		ORDER BY created_at ASC
+	`, eventID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var reservations []entity.Reservation
+
+	for rows.Next() {
+		var reservation entity.Reservation
+
+		err := rows.Scan(
+			&reservation.ID,
+			&reservation.EventID,
+			&reservation.Name,
+			&reservation.Email,
+			&reservation.Quantity,
+			&reservation.Token,
+			&reservation.Status,
+			&reservation.CreatedAt,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		reservations = append(reservations, reservation)
+	}
+
+	return reservations, nil
+}

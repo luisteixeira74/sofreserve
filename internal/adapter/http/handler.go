@@ -13,8 +13,10 @@ import (
 	"sof-reserve/internal/core/dto"
 	"sof-reserve/internal/core/entity"
 	coreErr "sof-reserve/internal/core/errors"
+	"sof-reserve/internal/core/port"
 	"sof-reserve/internal/core/usecase"
 	"sof-reserve/internal/shared/id"
+	"sof-reserve/internal/shared/security"
 )
 
 var tmpl = template.Must(
@@ -86,6 +88,13 @@ type EventCreateView struct {
 	Error          string
 }
 
+type OwnerDashboardView struct {
+	EventName     string
+	TotalSeats    int
+	TotalConfirmed int
+	Reservations  []entity.Reservation
+}
+
 // =====================
 // HANDLER
 // =====================
@@ -95,6 +104,8 @@ type Handler struct {
 	reserveUC   *usecase.CreateReservationUseCase
 	confirmUC   *usecase.ConfirmReservationUseCase
 	eventViewUC *usecase.GetEventViewUseCase
+	eventRepo       port.EventRepository
+reservationRepo port.ReservationRepository
 }
 
 // =====================
@@ -179,12 +190,18 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	publicID := id.GeneratePublicID()
+	ownerToken, err := security.GenerateToken()
+
+	if err != nil {
+		http.Error(w, "erro ao gerar token", http.StatusInternalServerError)
+		return
+	}
 
 	var id int
 	err = h.db.QueryRow(
-		`INSERT INTO events (name, total_seats, ends_at, public_id, organizer_email)
-		 VALUES ($1,$2,$3,$4,$5) RETURNING id`,
-		name, totalSeats, endsAt, publicID, email,
+		`INSERT INTO events (name, total_seats, ends_at, public_id, organizer_email, owner_token)
+		 VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+		name, totalSeats, endsAt, publicID, email, ownerToken,
 	).Scan(&id)
 
 	if err != nil {
@@ -550,6 +567,48 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 			EventID: eventID,
 			EventName: eventName,
 		},
+	})
+}
+
+func (h *Handler) OwnerDashboard(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+
+	if len(parts) != 2 {
+		http.NotFound(w, r)
+		return
+	}
+
+	token := parts[1]
+
+	event, err := h.eventRepo.FindByOwnerToken(token)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	reservations, err := h.reservationRepo.FindConfirmedByEventID(event.ID)
+	if err != nil {
+		http.Error(w, "erro interno", http.StatusInternalServerError)
+		return
+	}
+
+	totalConfirmed := 0
+
+	for _, reservation := range reservations {
+		totalConfirmed += reservation.Quantity
+	}
+
+	view := OwnerDashboardView{
+		EventName:      event.Name,
+		TotalSeats:     event.TotalSeats,
+		TotalConfirmed: totalConfirmed,
+		Reservations:   reservations,
+	}
+
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page:  "event_details_dashboard",
+		Title: buildTitle("Owner Dashboard", event.Name),
+		Data:  view,
 	})
 }
 

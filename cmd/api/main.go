@@ -57,6 +57,8 @@ func main() {
 		reserveUseCase,
 		confirmationUseCase,
 		eventViewUC,
+		eventRepo,
+		reservationRepo,
 		database,
 	)
 

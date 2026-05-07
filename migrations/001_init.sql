@@ -9,7 +9,8 @@ CREATE TABLE events (
     name TEXT NOT NULL,
     total_seats INT NOT NULL,
     ends_at TIMESTAMP NOT NULL,
-    public_id TEXT
+    public_id TEXT,
+    owner_token VARCHAR(255)
 );
 
 -- =====================

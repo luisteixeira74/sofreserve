@@ -1,5 +1,7 @@
 package entity
 
+import "time"
+
 type Reservation struct {
 	ID       int
 	EventID  int
@@ -8,4 +10,5 @@ type Reservation struct {
 	Quantity int
 	Status   string
 	Token    string
+	CreatedAt time.Time
 }
