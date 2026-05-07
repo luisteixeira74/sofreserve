@@ -12,13 +12,7 @@ type ConfirmReservationUseCase struct {
 	db *sql.DB
 }
 
-func NewConfirmReservationUseCase(db *sql.DB) *ConfirmReservationUseCase {
-	return &ConfirmReservationUseCase{
-		db: db,
-	}
-}
-
-type ConfirmOutput struct {
+type ConfirmReservationOutput struct {
 	Name     string
 	Email    string
 	Quantity int
@@ -28,27 +22,24 @@ type ConfirmOutput struct {
 	Token    string
 }
 
-func (uc *ConfirmReservationUseCase) Execute(token string) (*ConfirmOutput, error) {
+func NewConfirmReservationUseCase(db *sql.DB) *ConfirmReservationUseCase {
+	return &ConfirmReservationUseCase{
+		db: db,
+	}
+}
 
-	// =====================
-	// VALIDAÇÃO BÁSICA
-	// =====================
+func (uc *ConfirmReservationUseCase) Execute(token string) (*ConfirmReservationOutput, error) {
+
 	if token == "" {
 		return nil, coreErr.ErrInvalidToken
 	}
 
-	// =====================
-	// TRANSAÇÃO
-	// =====================
 	tx, err := uc.db.Begin()
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
 
-	// =====================
-	// BUSCA RESERVA
-	// =====================
 	var name string
 	var email string
 	var quantity int
@@ -70,26 +61,24 @@ func (uc *ConfirmReservationUseCase) Execute(token string) (*ConfirmOutput, erro
 	}
 
 	// =====================
-	// IDEMPOTÊNCIA
-	// se a reserva já estiver confirmada, apenas retorna os dados sem tentar confirmar novamente
+	// IDEMPOTÊNCIA CORRETA
 	// =====================
-	if status != string(entity.StatusPending) {
-
+	if status == string(entity.StatusConfirmed) {
 		_ = tx.Commit()
 
-		return &ConfirmOutput{
-			Message:  "Reserva confirmada com sucesso!",
+		return &ConfirmReservationOutput{
+			Message:  "Reserva já confirmada.",
 			Name:     name,
 			Email:    email,
 			Quantity: quantity,
 			EventID:  eventID,
-			Status:   string(entity.StatusConfirmed),
+			Status:   status,
 			Token:    token,
 		}, nil
 	}
 
 	// =====================
-	// VALIDA EVENTO
+	// EVENTO
 	// =====================
 	var totalSeats int
 	var endsAt time.Time
@@ -110,7 +99,7 @@ func (uc *ConfirmReservationUseCase) Execute(token string) (*ConfirmOutput, erro
 	}
 
 	// =====================
-	// VERIFICA VAGAS
+	// CAPACIDADE
 	// =====================
 	var reserved int
 	err = tx.QueryRow(`
@@ -128,7 +117,7 @@ func (uc *ConfirmReservationUseCase) Execute(token string) (*ConfirmOutput, erro
 	}
 
 	// =====================
-	// CONFIRMA RESERVA
+	// UPDATE
 	// =====================
 	_, err = tx.Exec(`
 		UPDATE reservations
@@ -143,17 +132,11 @@ func (uc *ConfirmReservationUseCase) Execute(token string) (*ConfirmOutput, erro
 		return nil, err
 	}
 
-	// =====================
-	// COMMIT
-	// =====================
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 
-	// =====================
-	// OUTPUT
-	// =====================
-	return &ConfirmOutput{
+	return &ConfirmReservationOutput{
 		Message:  "Reserva confirmada com sucesso!",
 		Name:     name,
 		Email:    email,

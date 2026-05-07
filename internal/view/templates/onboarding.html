@@ -1,0 +1,90 @@
+{{ define "onboarding" }}
+
+<div class="terminal-card onboarding">
+  <div class="terminal-header">{{.Title}}</div>
+
+  <div class="terminal-body onboarding-body">
+    <!-- PROGRESSO -->
+    <div class="progress-container">
+      <div class="progress-step" id="bar1"></div>
+      <div class="progress-step" id="bar2"></div>
+      <div class="progress-step" id="bar3"></div>
+    </div>
+
+    <br />
+
+    <!-- STEP 1 -->
+    <div class="step" id="step1">
+      <p>
+        <span class="prompt">&gt;</span>
+        <span class="step-title">Crie um Evento</span>
+        <span class="step-desc"
+          >Defina a quantidade de vagas e data limite.</span
+        >
+      </p>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step hidden" id="step2">
+      <p>
+        <span class="prompt">&gt;</span>
+        <span class="step-title">Receba Reservas</span>
+        <span class="step-desc">
+          Compartilhe o link do evento para receber reservas. Usuários confirmam
+          via e-mail.
+        </span>
+      </p>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step hidden" id="step3">
+      <p>
+        <span class="prompt">&gt;</span>
+        <span class="step-title">Acompanhe em tempo real</span>
+        <span class="step-desc">
+          Veja ocupação, vagas restantes e status do evento em tempo real.
+      </p>
+    </div>
+
+    <br />
+
+    <!-- CTA -->
+    <div class="onboarding-actions">
+      <a href="/events/new" class="btn-terminal"> CRIAR MEU EVENTO </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    let current = 1;
+    const steps = 3;
+
+    function showStep(step) {
+      for (let i = 1; i <= steps; i++) {
+        const el = document.getElementById("step" + i);
+        const bar = document.getElementById("bar" + i);
+
+        if (el) el.classList.toggle("hidden", i !== step);
+        if (bar) bar.classList.toggle("active", i <= step);
+      }
+    }
+
+    function startFlow() {
+      setTimeout(() => {
+        current = 2;
+        showStep(current);
+
+        setTimeout(() => {
+          current = 3;
+          showStep(current);
+        }, 2200);
+      }, 1800);
+    }
+
+    showStep(current);
+    startFlow();
+  });
+</script>
+
+{{ end }}

@@ -1,0 +1,44 @@
+{{ define "reservation_confirmed" }}
+<div class="terminal-card">
+  <div class="terminal-header">{{.Title}}</div>
+
+  <div class="terminal-body">
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Evento:</span>
+      <span class="value">{{.Data.EventName}}</span>
+    </p>
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">E-mail:</span>
+      <span class="value">{{.Data.Email}}</span>
+    </p>
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Quantidade:</span>
+      <span class="value">{{.Data.Quantity}}</span>
+    </p>
+
+    <p class="success">{{.Data.Message}}</p>
+
+    <br />
+
+    <br />
+
+    <p class="muted typing-msg">
+      <span class="prompt">&gt;</span>
+      Gerando link de cancelamento...
+    </p>
+
+    <div class="copy-wrapper">
+      <input
+        class="input-link typing dynamic-link copy-input"
+        data-link="{{.Data.CancelLink}}"
+        readonly
+      />
+      <span class="copy-feedback">copiado!</span>
+    </div>
+  </div>
+</div>
+
+{{ end }}

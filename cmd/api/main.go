@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	httpadapter "sof-reserve/internal/adapter/http"
 	"sof-reserve/internal/adapter/repository/postgres"
@@ -15,6 +20,7 @@ func main() {
 	// INFRA (DB)
 	// =====================
 	database := db.NewConnection()
+	defer database.Close()
 
 	// =====================
 	// REPOSITORIES
@@ -25,26 +31,80 @@ func main() {
 	// =====================
 	// USECASES
 	// =====================
-	reserveUseCase := usecase.NewReserveSpotUseCase(
+	clock := usecase.RealClock{}
+
+	reserveUseCase := usecase.NewCreateReservationUseCase(
+		database,
 		eventRepo,
 		reservationRepo,
+		clock,
 	)
 
 	confirmationUseCase := usecase.NewConfirmReservationUseCase(
 		database,
 	)
 
+	eventViewUC := usecase.NewGetEventViewUseCase(
+		eventRepo,
+		reservationRepo,
+		clock,
+	)
+
 	// =====================
 	// ROUTER
 	// =====================
-	router := httpadapter.NewRouter(reserveUseCase, confirmationUseCase, database)
+	router := httpadapter.NewRouter(
+		reserveUseCase,
+		confirmationUseCase,
+		eventViewUC,
+		database,
+	)
 
 	// =====================
-	// SERVER
+	// PORT
 	// =====================
-	log.Println("Server running on :8080")
-
-	if err := http.ListenAndServe(":8080", router); err != nil {
-		log.Fatal(err)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
+
+	// =====================
+	// SERVER CONFIG
+	// =====================
+	server := &http.Server{
+		Addr:              ":" + port,
+		Handler:           router,
+		ReadTimeout:       5 * time.Second,
+		ReadHeaderTimeout: 3 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	// =====================
+	// START SERVER (goroutine)
+	// =====================
+	go func() {
+		log.Println("Server running on port:", port)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("server error:", err)
+		}
+	}()
+
+	// =====================
+	// GRACEFUL SHUTDOWN
+	// =====================
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+	<-quit
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("forced shutdown:", err)
+	}
+
+	log.Println("Server exited properly")
 }

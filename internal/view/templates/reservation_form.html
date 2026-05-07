@@ -1,0 +1,75 @@
+{{define "reservation_form"}}
+
+<div class="terminal-card">
+  <div class="terminal-header">{{.Title}}</div>
+
+  <div class="terminal-body">
+    <div class="terminal-subheader">
+      <span>Faça abaixo sua reserva para o evento</span>
+      <span class="value"> {{.Data.EventName}}</span>
+    </div>
+
+    {{if .Data.Error}}
+    <div class="error">{{.Data.Error}}</div>
+    {{end}}
+
+    <br />
+
+    {{if gt .Data.Available 0}}
+
+    <form method="POST" action="/events/reserve" class="form">
+      <input type="hidden" name="event_id" value="{{.Data.EventID}}" />
+
+      <p>
+        <span class="prompt">&gt;</span>
+        <span class="label">Nome:</span>
+        <input
+          type="text"
+          class="value input-medium"
+          name="name"
+          placeholder="Seu nome"
+          value="{{.Data.Name}}"
+        />
+      </p>
+
+      <p>
+        <span class="prompt">&gt;</span>
+        <span class="label">Email:</span>
+        <input
+          type="email"
+          class="value input-medium"
+          name="email"
+          placeholder="seu@email.com"
+          value="{{.Data.Email}}"
+        />
+      </p>
+
+      <p>
+        <span class="prompt">&gt;</span>
+        <span class="label">Quantidade:</span>
+        <input
+          type="number"
+          name="quantity"
+          class="value input-small"
+          min="1"
+          max="{{.Data.Available}}"
+          step="1"
+          value="{{if gt .Data.Quantity 0}}{{.Data.Quantity}}{{else}}1{{end}}"
+        />
+      </p>
+
+      <br />
+
+      <button type="submit" class="btn-terminal" data-loading="true">
+        [ CONFIRMAR RESERVA ]
+      </button>
+    </form>
+    {{else}}
+
+    <div class="error">❌ Este evento está esgotado</div>
+
+    {{end}}
+  </div>
+</div>
+
+{{end}}

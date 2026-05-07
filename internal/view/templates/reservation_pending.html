@@ -1,0 +1,59 @@
+{{define "reservation_pending"}}
+
+<div class="terminal-card">
+  <div class="terminal-header">{{.Title}}</div>
+
+  <div class="terminal-body">
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Evento: </span>
+      <span class="value">{{.Data.EventName}}</span>
+    </p>
+
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Status:</span>
+      <span class="value"> Pendente</span>
+    </p>
+
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Nome:</span>
+      <span class="value">{{.Data.Name}}</span>
+    </p>
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Email:</span>
+      <span class="value">{{.Data.Email}}</span>
+    </p>
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Quantidade:</span>
+      <span class="value">{{.Data.Quantity}}</span>
+    </p>
+
+    <br />
+
+    <p class="muted font-medium">
+      A reserva só será garantida após confirmação.
+    </p>
+
+    <br />
+
+    <p class="muted typing-msg">
+      <span class="prompt">&gt;</span>
+      Gerando seu link de confirmação...
+    </p>
+
+    <div class="copy-wrapper">
+      <input
+        class="input-link typing dynamic-link copy-input"
+        data-link="{{.Data.ConfirmLink}}"
+        readonly
+      />
+      <span class="copy-feedback">copiado!</span>
+    </div>
+  </div>
+</div>
+
+{{end}}

@@ -12,15 +12,11 @@ import (
 =========================================
 TESTE: CREATE EVENT USECASE
 =========================================
-
-O que estamos validando:
-1. Evento é criado corretamente
-2. Nome é persistido
-3. Total de vagas é persistido
-4. Data de evento é aceita
-5. ID é gerado
-
-Esse é o core do sistema SOF_RESERVE.
+Valida criação de evento com:
+- nome
+- total de vagas
+- data final
+- persistência no repositório
 =========================================
 */
 
@@ -50,7 +46,7 @@ func (r *InMemoryEventRepository) Create(name string, totalSeats int, endsAt tim
 	return id, nil
 }
 
-func TestCreateEvent(t *testing.T) {
+func TestCreateEventUseCase(t *testing.T) {
 	// ARRANGE
 	repo := NewInMemoryEventRepository()
 	uc := usecase.NewCreateEventUseCase(repo)
@@ -59,27 +55,31 @@ func TestCreateEvent(t *testing.T) {
 	totalSeats := 100
 	eventDate := time.Now().Add(24 * time.Hour)
 
+	input := usecase.CreateEventInput{
+		Name:       eventName,
+		TotalSeats: totalSeats,
+		EndsAt:     eventDate,
+	}
+
 	// ACT
-	id, err := uc.Execute(eventName, totalSeats, eventDate)
+	id, err := uc.Execute(input)
 
 	// ASSERT
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if id == 0 {
-		t.Error("expected valid event ID")
+	if id <= 0 {
+		t.Fatal("expected valid event ID")
 	}
 
-	// valida no repo
 	event, exists := repo.events[id]
-
 	if !exists {
 		t.Fatal("event not found in repository")
 	}
 
 	if event.Name != eventName {
-		t.Errorf("expected %s, got %s", eventName, event.Name)
+		t.Errorf("expected name %s, got %s", eventName, event.Name)
 	}
 
 	if event.TotalSeats != totalSeats {

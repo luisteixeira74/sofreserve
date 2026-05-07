@@ -1,9 +1,30 @@
 package port
 
+import (
+	"database/sql"
+	"sof-reserve/internal/core/entity"
+)
+
 type ReservationRepository interface {
-	ExistsByEventAndEmail(eventID int, email string) (bool, error)
+	SumByEventID(eventID int) (int, error)
 
-	Create(eventID int, name, email string, quantity int, status, token string) error
+	Create(
+		tx *sql.Tx,
+		eventID int,
+		name string,
+		email string,
+		qty int,
+		status string,
+		token string,
+	) error
 
-	SumConfirmedByEvent(eventID int) (int, error)
+	ExistsByEventAndEmail(
+		tx *sql.Tx,
+		eventID int,
+		email string,
+	) (bool, error)
+
+	FindByTokenForUpdate(tx *sql.Tx, token string) (entity.Reservation, error)
+
+	UpdateStatus(tx *sql.Tx, id int, status string) error
 }

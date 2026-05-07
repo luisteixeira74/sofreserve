@@ -1,0 +1,29 @@
+{{ define "reservation_error" }}
+
+<div class="terminal-card">
+  <div class="terminal-header">{{.Title}}</div>
+  <p>
+    <span class="prompt">&gt;</span>
+    <span class="label">Evento:</span>
+    <span class="value">{{.EventTitle}}</span>
+  </p>
+
+  <div class="terminal-body">
+    <p class="error">> {{.Message}}</p>
+
+    <br />
+
+    <p class="muted">
+      > Não foi possível confirmar sua reserva. O link pode estar inválido ou
+      expirado.
+    </p>
+
+    <br /><br />
+
+    <div class="onboarding-actions">
+      <a href="/onboarding" class="btn-terminal"> [ VOLTAR AO INÍCIO ] </a>
+    </div>
+  </div>
+</div>
+
+{{ end }}

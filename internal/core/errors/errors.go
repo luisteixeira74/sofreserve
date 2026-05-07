@@ -50,6 +50,21 @@ var (
 		Message: "Token inválido",
 		Code:    "INVALID_TOKEN",
 	}
+
+	ErrReservationAlreadyExists = &AppError{
+		Message: "Reserva já existe para este email e evento",
+		Code:    "RESERVATION_ALREADY_EXISTS",
+	}
+
+	ErrInvalidStatusTransition = &AppError{
+		Message: "Transição de status inválida",
+		Code:    "INVALID_STATUS_TRANSITION",
+	}
+
+	StatusConfirmed = "CONFIRMADO"
+	StatusPending   = "PENDENTE"
+	StatusCanceled  = "CANCELADO"
+
 )
 
 type AppError struct {

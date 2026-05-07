@@ -1,0 +1,28 @@
+{{ define "reservation_cancel" }}
+<div class="terminal-card">
+  <div class="terminal-header">{{.Title}}</div>
+
+  <div class="terminal-body">
+    <div class="terminal-subheader">
+      <span>Reserva</span>
+      <span class="value">cancelada</span>
+    </div>
+
+    <br />
+
+    <div class="info">
+      Sua reserva para <b>{{.Data.EventName}}</b> foi cancelada com sucesso.
+    </div>
+
+    <br />
+
+    <div class="status-ok">✔ Cancelamento confirmado</div>
+
+    <br />
+
+    <a href="{{.Data.PublicLink}}" class="btn-terminal">
+      [ FAZER NOVA RESERVA ]
+    </a>
+  </div>
+</div>
+{{ end }}

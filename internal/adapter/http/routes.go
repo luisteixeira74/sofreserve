@@ -8,41 +8,45 @@ import (
 )
 
 func NewRouter(
-	reserveUC *usecase.ReserveSpotUseCase,
+	createReservationUC *usecase.CreateReservationUseCase,
 	confirmUC *usecase.ConfirmReservationUseCase,
+	eventViewUC *usecase.GetEventViewUseCase,
 	db *sql.DB,
 ) http.Handler {
 
 	handler := &Handler{
-		reserveUC: reserveUC,
-		confirmUC: confirmUC,
-		db:        db,
+		reserveUC:   createReservationUC,
+		confirmUC:   confirmUC,
+		eventViewUC: eventViewUC,
+		db:          db,
 	}
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", handler.HealthHandler)
 
-	// onboarding
+	// pages
 	mux.HandleFunc("/onboarding", handler.OnboardingPage)
 
-	// eventos (admin)
-	mux.HandleFunc("/events/new", handler.CreateEventPage)   // GET
-	mux.HandleFunc("/events/view", handler.EventPage)        // GET
-	mux.HandleFunc("/events", handler.CreateEventHandler)    // POST
+	// events
+	mux.HandleFunc("/events/new", handler.CreateEventPage)
+	mux.HandleFunc("/events", handler.CreateEventHandler) // POST
+	// event dashboard
+	mux.HandleFunc("/events/", handler.EventPageByPublicID) // GET /events/{public_id}
 
+
+	// public event
 	mux.HandleFunc("/e/", handler.EventPublicPage)
 
-	// reservas (guest)
-	mux.HandleFunc("/reservation", handler.ReservationPage)      // GET
-	mux.HandleFunc("/events/reserve", handler.CreateReservationHandler) // POST
-	// confirmação
+	// reservations
+	mux.HandleFunc("/events/reserve", handler.CreateReservationHandler)
+
+	// confirm / cancel
 	mux.HandleFunc("/confirm", handler.ConfirmReservation)
-	// cancelamento
 	mux.HandleFunc("/cancel", handler.CancelReservation)
 
-	// static files
-	fs := http.FileServer(http.Dir("./templates/assets"))
+	// assets (filesystem)
+	fs := http.FileServer(http.Dir("./internal/view/assets"))
 	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	return mux

@@ -13,12 +13,12 @@ func NewReservationRepository(db *sql.DB) *ReservationRepository {
 	return &ReservationRepository{db: db}
 }
 
-func (r *ReservationRepository) SumByEventID(tx *sql.Tx, eventID int) (int, error) {
+func (r *ReservationRepository) SumByEventID(eventID int) (int, error) {
 	var total int
 
-	err := tx.QueryRow(
-		`SELECT COALESCE(SUM(quantity), 0) 
-		 FROM reservations 
+	err := r.db.QueryRow(
+		`SELECT COALESCE(SUM(quantity), 0)
+		 FROM reservations
 		 WHERE event_id = $1 AND status = $2`,
 		eventID,
 		string(entity.StatusConfirmed),
@@ -38,8 +38,8 @@ func (r *ReservationRepository) Create(
 ) error {
 
 	_, err := tx.Exec(
-		`INSERT INTO reservations 
-		(event_id, name, email, quantity, status, token) 
+		`INSERT INTO reservations
+		(event_id, name, email, quantity, status, token)
 		VALUES ($1, $2, $3, $4, $5, $6)`,
 		eventID, name, email, qty, status, token,
 	)
@@ -57,10 +57,10 @@ func (r *ReservationRepository) ExistsByEventAndEmail(
 
 	err := tx.QueryRow(
 		`SELECT EXISTS(
-			SELECT 1 
-			FROM reservations 
-			WHERE event_id = $1 
-			AND email = $2 
+			SELECT 1
+			FROM reservations
+			WHERE event_id = $1
+			AND email = $2
 			AND status IN ($3, $4)
 		)`,
 		eventID,
@@ -70,4 +70,40 @@ func (r *ReservationRepository) ExistsByEventAndEmail(
 	).Scan(&exists)
 
 	return exists, err
+}
+
+func (r *ReservationRepository) FindByTokenForUpdate(tx *sql.Tx, token string) (entity.Reservation, error) {
+	var res entity.Reservation
+
+	err := tx.QueryRow(`
+		SELECT id, event_id, name, email, quantity, status, token
+		FROM reservations
+		WHERE token = $1
+		FOR UPDATE
+	`, token).Scan(
+		&res.ID,
+		&res.EventID,
+		&res.Name,
+		&res.Email,
+		&res.Quantity,
+		&res.Status,
+		&res.Token,
+	)
+
+	return res, err
+}
+
+func (r *ReservationRepository) UpdateStatus(
+	tx *sql.Tx,
+	id int,
+	status string,
+) error {
+
+	_, err := tx.Exec(`
+		UPDATE reservations
+		SET status = $1
+		WHERE id = $2
+	`, status, id)
+
+	return err
 }

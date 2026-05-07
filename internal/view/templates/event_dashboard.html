@@ -1,0 +1,77 @@
+{{define "event_dashboard"}}
+<div class="terminal-card">
+  <div class="terminal-header">{{.Title}}</div>
+
+  <div class="terminal-body">
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label"> Evento: </span>
+      <span class="value">{{.Data.Name}}</span>
+    </p>
+
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label"> Status: </span>
+      <span class="value">{{if .Data.IsClosed}}Closed{{else}}Open{{end}}</span>
+    </p>
+
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label"> Ocupação: </span>
+      <span class="value">{{.Data.Reserved}} / {{.Data.TotalSeats}}</span>
+    </p>
+
+    {{if gt .Data.Percentage 0}}
+    <div class="progress-bar">
+      <div
+        class="progress-fill {{if lt .Data.Percentage 50}}low{{else if lt .Data.Percentage 80}}medium{{else}}high{{end}}"
+        style="width: {{.Data.Percentage}}%"
+      >
+        {{.Data.Percentage}}%
+      </div>
+    </div>
+    {{end}}
+
+    <p class="muted">
+      <span class="prompt">&gt;</span>
+      {{.Data.RemainingText}}
+    </p>
+
+    {{if .Data.IsClosed}}
+    <p class="closed">EVENTO ENCERRADO</p>
+    {{else}} {{if and (gt .Data.Available 0) (lt .Data.Available 5)}}
+    <p class="alert">⚠ Restam poucas vagas!</p>
+    {{end}}
+
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Link público do evento:</span>
+    </p>
+
+    <div class="copy-wrapper">
+      <input
+        value="{{.Data.PublicLink}}"
+        readonly
+        class="input-link copy-input"
+      />
+      <span class="copy-feedback">copiado!</span>
+    </div>
+
+    <p class="timestamp">Última atualização: {{.Data.LastUpdated}}</p>
+
+    <br />
+
+    <a
+      href="https://wa.me/?text=Acesse o evento: {{.Data.PublicLink}}"
+      target="_blank"
+      class="btn-terminal"
+    >
+      [ COMPARTILHAR NO WHATSAPP ]
+    </a>
+
+    {{end}}
+
+    <br />
+  </div>
+</div>
+{{end}}

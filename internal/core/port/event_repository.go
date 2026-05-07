@@ -1,14 +1,13 @@
 package port
 
 import (
+	"database/sql"
 	"sof-reserve/internal/core/entity"
-	"time"
 )
 
 type EventRepository interface {
-	Create(name string, totalSeats int, endsAt time.Time) (int, error)
-
 	GetByID(id int) (entity.Event, error)
+	GetByPublicID(publicID string) (entity.Event, error)
 
-	FindByIDForUpdate(id int) (int, time.Time, error)
+	FindByIDForUpdate(tx *sql.Tx, id int) (entity.Event, error)
 }

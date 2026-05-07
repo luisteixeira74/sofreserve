@@ -1,7 +1,11 @@
 package entity
 
 type Reservation struct {
-	EventID int
-	Name    string
+	ID       int
+	EventID  int
+	Name     string
+	Email    string
 	Quantity int
+	Status   string
+	Token    string
 }
