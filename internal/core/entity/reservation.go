@@ -10,5 +10,6 @@ type Reservation struct {
 	Quantity int
 	Status   string
 	Token    string
+	CheckedIn bool
 	CreatedAt time.Time
 }

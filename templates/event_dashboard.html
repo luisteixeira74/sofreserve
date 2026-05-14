@@ -1,26 +1,34 @@
 {{define "event_dashboard"}}
+
 <div class="terminal-card">
+  asdasdas
   <div class="terminal-header">{{.Title}}</div>
 
   <div class="terminal-body">
     <p>
       <span class="prompt">&gt;</span>
-      <span class="label"> Evento: {{.Data.Name}}</span>
+      <span class="label"> Evento: {{.Data.Name}} </span>
     </p>
 
     <p>
       <span class="prompt">&gt;</span>
-      <span> Status: {{if .Data.IsClosed}}Closed{{else}}Open{{end}}</span>
+      <span> Status: {{if .Data.IsClosed}}Closed{{else}}Open{{end}} </span>
     </p>
 
     <p>
       <span class="prompt">&gt;</span>
       <span class="label">
-        Ocupação: {{.Data.Reserved}} / {{.Data.TotalSeats}}</span
-      >
+        Ocupação: {{.Data.Reserved}} / {{.Data.TotalSeats}}
+      </span>
+    </p>
+
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="muted"> {{.Data.RemainingText}} </span>
     </p>
 
     {{if gt .Data.Percentage 0}}
+
     <div class="progress-bar">
       <div
         class="progress-fill {{if lt .Data.Percentage 50}}low{{else if lt .Data.Percentage 80}}medium{{else}}high{{end}}"
@@ -29,11 +37,14 @@
         {{.Data.Percentage}}%
       </div>
     </div>
+
     {{end}} {{if .Data.IsClosed}}
+
     <p class="closed">EVENTO ENCERRADO</p>
+
     {{else}} {{if .Data.ShowAlert}}
     <p class="alert">⏳ reservas encerram em breve</p>
-    {{end}} {{if lt .Available 5}}
+    {{end}} {{if lt .Data.Available 5}}
     <p class="alert">⚠ Restam poucas vagas!</p>
     {{end}}
 
@@ -42,8 +53,9 @@
     <p class="muted">
       <span class="prompt">&gt;</span>
       <span class="label">Link do evento:</span>
+
       <input
-        value="http://localhost:8080/e/{{.Data.PublicID}}"
+        value="{{.Data.PublicLink}}"
         readonly
         class="input-link"
         onclick="this.select()"
@@ -52,8 +64,14 @@
 
     <br />
 
+    <a href="/events/{{.Data.PublicID}}/reservations" class="terminal-link">
+      [ VER RESERVAS ]
+    </a>
+
+    <br />
+
     <a
-      href="https://wa.me/?text=Acesse o evento: http://localhost:8080/e/{{.Data.PublicID}}"
+      href="https://wa.me/?text=Acesse o evento: {{.Data.PublicLink}}"
       target="_blank"
       class="btn-terminal"
     >
@@ -63,6 +81,16 @@
     {{end}}
 
     <br />
+
+    <p class="muted">
+      <span class="prompt">&gt;</span>
+      Outros eventos deste organizador: {{.Data.OtherEvents}}
+    </p>
+
+    <br />
+
+    <p class="muted">Última atualização: {{.Data.LastUpdated}}</p>
   </div>
 </div>
+
 {{end}}
