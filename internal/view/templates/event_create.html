@@ -11,37 +11,118 @@
 
     <form method="POST" action="/events" class="form">
       <div class="field">
-        <span class="prompt">&gt;</span>
-        <span class="label">Nome do evento:</span>
+        <label class="label" for="event-name">&gt; Nome do evento:</label>
         <input
-          class="value"
+          class="value input-large"
           type="text"
           name="name"
+          id="event-name"
           placeholder="Nome do evento"
           value="{{with .Data}}{{.Name}}{{end}}"
         />
       </div>
 
       <div class="field">
-        <span class="prompt">&gt;</span>
-        <span class="label">Total de vagas:</span>
+        <label class="label" for="organizer-email"
+          >&gt; Email do organizador:</label
+        >
         <input
-          class="value"
-          type="number"
-          name="total_seats"
-          placeholder="Total de vagas"
-          value="{{with .Data}}{{.TotalSeats}}{{end}}"
+          class="value input-medium"
+          type="email"
+          name="organizer_email"
+          id="organizer-email"
+          placeholder="Email do organizador"
+          value="{{with .Data}}{{.OrganizerEmail}}{{end}}"
         />
       </div>
 
       <div class="field">
-        <span class="prompt">&gt;</span>
-        <span class="label"
-          >Data do evento (não aceita reservas nesta data):</span
+        <label class="label" for="seats">&gt; Total de vagas:</label>
+
+        <div class="number-input">
+          <!-- input primeiro -->
+          <input
+            id="seats"
+            type="number"
+            name="total_seats"
+            min="1"
+            max="999"
+            class="value input-seats"
+            placeholder="Ex 100"
+            value="{{with .Data}}{{if .TotalSeats}}{{.TotalSeats}}{{end}}{{end}}"
+          />
+
+          <!-- controle fino -->
+          <div class="input-group">
+            <button
+              class="btn btn-adjust"
+              type="button"
+              onclick="changeSeats(-10)"
+            >
+              -10
+            </button>
+            <button
+              class="btn btn-adjust"
+              type="button"
+              onclick="changeSeats(-1)"
+            >
+              -1
+            </button>
+
+            <button
+              class="btn btn-adjust"
+              type="button"
+              onclick="changeSeats(1)"
+            >
+              +1
+            </button>
+            <button
+              class="btn btn-adjust"
+              type="button"
+              onclick="changeSeats(10)"
+            >
+              +10
+            </button>
+          </div>
+
+          <div class="presets">
+            <button class="btn btn-preset" type="button" onclick="setSeats(50)">
+              50
+            </button>
+            <button
+              class="btn btn-preset"
+              type="button"
+              onclick="setSeats(100)"
+            >
+              100
+            </button>
+            <button
+              class="btn btn-preset"
+              type="button"
+              onclick="setSeats(200)"
+            >
+              200
+            </button>
+            <button
+              class="btn btn-preset"
+              type="button"
+              onclick="setSeats(500)"
+            >
+              500
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label" for="event-date"
+          >&gt; Data do evento (não aceita reservas nesta data):</label
         >
         <input
-          class="value"
+          class="value input-small"
+          id="event-date"
           type="date"
+          onclick="this.showPicker && this.showPicker()"
           name="ends_at"
           placeholder="Data do evento"
           value="{{with .Data}}{{.EndsAt}}{{end}}"
