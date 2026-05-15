@@ -3,6 +3,7 @@ package http
 import (
 	"database/sql"
 	"net/http"
+	"strings"
 
 	"sof-reserve/internal/core/port"
 	"sof-reserve/internal/core/usecase"
@@ -34,21 +35,32 @@ func NewRouter(
 	mux.HandleFunc("/onboarding", handler.OnboardingPage)
 
 	// events
-	mux.HandleFunc("/events/new", handler.CreateEventPage)
-	mux.HandleFunc("/events", handler.CreateEventHandler)
+	mux.HandleFunc("/events/new", handler.CreateEventPage) // GET
+	mux.HandleFunc("/events", handler.CreateEventHandler) // POST
+
+	// owner event list
+	mux.HandleFunc("/manage/", handler.OwnerDashboard)
+	// owner actions
+	mux.HandleFunc("/manage/checkin", handler.OwnerCheckin) // Post
 
 	// dashboard do evento
-	mux.HandleFunc("/events/", handler.EventPageByPublicID)
+	mux.HandleFunc("/events/", func(w http.ResponseWriter, r *http.Request) {
 
-	// evento público
+		parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+
+		if len(parts) == 3 && parts[2] == "reservations" {
+			handler.EventReservationsPage(w, r, parts[1])
+			return
+		}
+
+		handler.EventPageByPublicID(w, r)
+	})
+	// link publico do evento
 	mux.HandleFunc("/e/", handler.EventPublicPage)
-
-	// owner dashboard
-	mux.HandleFunc("/manage/", handler.OwnerDashboard)
-
-	// reservations
+	
+	// reservation form
 	mux.HandleFunc("/events/reserve", handler.CreateReservationHandler)
-
+	
 	// confirm / cancel
 	mux.HandleFunc("/confirm", handler.ConfirmReservation)
 	mux.HandleFunc("/cancel", handler.CancelReservation)

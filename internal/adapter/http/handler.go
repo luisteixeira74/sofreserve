@@ -40,6 +40,7 @@ type EventView struct {
 	PublicID      string
 	LastUpdated   string
 	PublicLink string
+	OtherEvents string
 }
 
 type ReservationPageData struct {
@@ -219,12 +220,18 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) EventPageByPublicID(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 
-	if len(parts) != 2 {
+	if len(parts) < 2 || parts[1] == "" {
 		http.NotFound(w, r)
 		return
 	}
 
 	publicID := parts[1]
+
+	// reservations page
+	if len(parts) == 3 && parts[2] == "reservations" {
+		h.EventReservationsPage(w, r, publicID)
+		return
+	}
 
 	ucView, err := h.eventViewUC.ExecuteByPublicID(publicID)
 	if err != nil {
@@ -258,12 +265,51 @@ func (h *Handler) EventPageByPublicID(w http.ResponseWriter, r *http.Request) {
 		PublicID:      ucView.PublicID,
 		PublicLink:    baseURL + "/e/" + ucView.PublicID,
 		LastUpdated:   time.Now().Format("15:04:05"),
+		OtherEvents: "Em breve: outros eventos do organizador", // Placeholder, pode ser implementado futuramente
 	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page:  "event_dashboard",
 		Title: buildTitle("Dashboard", view.Name),
 		Data:  view,
+	})
+}
+
+func (h *Handler) EventReservationsPage(
+	w http.ResponseWriter,
+	r *http.Request,
+	publicID string,
+) {
+	event, err := h.eventViewUC.ExecuteByPublicID(publicID)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	reservations, err := h.reservationRepo.FindConfirmedByEventID(event.ID)
+	if err != nil {
+		http.Error(w, "failed to load reservations", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		EventName    string
+		PublicID     string
+		TotalSeats   int
+		Reserved     int
+		Reservations []entity.Reservation
+	}{
+		EventName:    event.Name,
+		PublicID:     event.PublicID,
+		TotalSeats:   event.TotalSeats,
+		Reserved:     event.Reserved,
+		Reservations: reservations,
+	}
+
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page:  "event_reservations",
+		Title: buildTitle("Reservas", event.Name),
+		Data:  data,
 	})
 }
 
@@ -309,6 +355,7 @@ func (h *Handler) EventPublicPage(w http.ResponseWriter, r *http.Request) {
 		PublicID:      ucView.PublicID,
 		PublicLink:    baseURL + "/e/" + ucView.PublicID,
 		LastUpdated:   time.Now().Format("15:04:05"),
+		OtherEvents: "Em breve: outros eventos do organizador", // Placeholder, pode ser implementado futuramente
 	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
@@ -610,6 +657,13 @@ func (h *Handler) OwnerDashboard(w http.ResponseWriter, r *http.Request) {
 		Title: buildTitle("Owner Dashboard", event.Name),
 		Data:  view,
 	})
+}
+
+func (h *Handler) OwnerCheckin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 }
 
 func getBaseURL(r *http.Request) string {
