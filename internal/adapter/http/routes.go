@@ -15,6 +15,8 @@ func NewRouter(
 	eventViewUC *usecase.GetEventViewUseCase,
 	eventRepo port.EventRepository,
 	reservationRepo port.ReservationRepository,
+	createEventUC *usecase.CreateEventUseCase,
+	getOrganizerStats *usecase.GetOrganizerStats,
 	db *sql.DB,
 ) http.Handler {
 
@@ -24,6 +26,8 @@ func NewRouter(
 		eventViewUC:     eventViewUC,
 		eventRepo:       eventRepo,
 		reservationRepo: reservationRepo,
+		createEventUC:   createEventUC,
+		organizerStats: getOrganizerStats,
 		db:              db,
 	}
 

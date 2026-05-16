@@ -554,3 +554,8 @@ input:-webkit-autofill {
     opacity: 0;
   }
 }
+
+.terminal-line {
+  margin-bottom: 6px;
+  color: var(--text-main);
+}

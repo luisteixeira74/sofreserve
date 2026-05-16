@@ -39,6 +39,7 @@ type EventView struct {
 	ShowAlert     bool
 	IsClosed      bool
 	PublicID      string
+	OrganizerEmail string
 }
 
 //
@@ -89,6 +90,7 @@ func (uc *GetEventViewUseCase) Execute(eventID int) (EventView, error) {
 		reserved,
 		event.EndsAt,
 		event.PublicID,
+		event.OrganizerEmail,
 	), nil
 }
 
@@ -110,6 +112,7 @@ func (uc *GetEventViewUseCase) ExecuteByPublicID(publicID string) (EventView, er
 		reserved,
 		event.EndsAt,
 		event.PublicID,
+		event.OrganizerEmail,
 	), nil
 }
 
@@ -126,6 +129,7 @@ func (uc *GetEventViewUseCase) build(
 	reserved int,
 	endsAt time.Time,
 	publicID string,
+	organizerEmail string,
 ) EventView {
 
 	now := uc.clock.Now()
@@ -170,5 +174,6 @@ func (uc *GetEventViewUseCase) build(
 		ShowAlert:     showAlert,
 		IsClosed:      isClosed,
 		PublicID:      publicID,
+		OrganizerEmail: organizerEmail,
 	}
 }

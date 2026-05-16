@@ -29,7 +29,9 @@
       "reservation_confirmed"}} {{template "reservation_confirmed" .}} {{else if
       eq .Page "reservation_cancel"}} {{template "reservation_cancel" .}} {{else
       if eq .Page "reservation_pending"}} {{template "reservation_pending" .}}
-      {{else if eq .Page "event_public"}} {{template "event_public" .}}{{end}}
+      {{else if eq .Page "event_public"}} {{template "event_public" .}}{{else if
+      eq .Page "event_owner_dashboard"}} {{template "event_owner_dashboard"
+      .}}{{end}}
     </main>
     <footer class="footer">
       <span class="muted"> > sof/reserve · built with Go </span>

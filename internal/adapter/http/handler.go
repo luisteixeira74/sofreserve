@@ -41,6 +41,8 @@ type EventView struct {
 	LastUpdated   string
 	PublicLink string
 	OtherEvents string
+	OrganizerEventCount int
+	OrganizerEmail string
 }
 
 type ReservationPageData struct {
@@ -101,12 +103,14 @@ type OwnerDashboardView struct {
 // =====================
 
 type Handler struct {
-	db          *sql.DB
 	reserveUC   *usecase.CreateReservationUseCase
 	confirmUC   *usecase.ConfirmReservationUseCase
 	eventViewUC *usecase.GetEventViewUseCase
-	eventRepo       port.EventRepository
-reservationRepo port.ReservationRepository
+	createEventUC *usecase.CreateEventUseCase
+	eventRepo port.EventRepository
+	reservationRepo port.ReservationRepository
+	organizerStats *usecase.GetOrganizerStats
+	db *sql.DB
 }
 
 // =====================
@@ -165,13 +169,18 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	name := r.FormValue("name")
+	name := strings.TrimSpace(r.FormValue("name"))
 	email := strings.ToLower(strings.TrimSpace(r.FormValue("organizer_email")))
 	totalSeatsStr := r.FormValue("total_seats")
 
 	totalSeats, err := strconv.Atoi(totalSeatsStr)
 
-	if name == "" || email == "" || !strings.Contains(email, "@") || err != nil || totalSeats <= 0 {
+	if name == "" ||
+		email == "" ||
+		!strings.Contains(email, "@") ||
+		err != nil ||
+		totalSeats <= 0 {
+
 		h.renderTemplate(w, "layout", RenderTemplateData{
 			Page:  "event_create",
 			Title: buildTitle("Criar evento", ""),
@@ -186,29 +195,55 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 
 	endsAt, err := time.Parse("2006-01-02", r.FormValue("ends_at"))
 	if err != nil {
-		http.Error(w, "data inválida", http.StatusBadRequest)
+
+		h.renderTemplate(w, "layout", RenderTemplateData{
+			Page:  "event_create",
+			Title: buildTitle("Criar evento", ""),
+			Data: EventCreateView{
+				Name:           name,
+				OrganizerEmail: email,
+				Error:          "Data inválida",
+			},
+		})
+
 		return
 	}
 
 	publicID := id.GeneratePublicID()
-	ownerToken, err := security.GenerateToken()
 
+	ownerToken, err := security.GenerateToken()
 	if err != nil {
 		http.Error(w, "erro ao gerar token", http.StatusInternalServerError)
 		return
 	}
 
-	var id int
-	err = h.db.QueryRow(
-		`INSERT INTO events (name, total_seats, ends_at, public_id, organizer_email, owner_token)
-		 VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-		name, totalSeats, endsAt, publicID, email, ownerToken,
-	).Scan(&id)
+	eventID, err := h.createEventUC.Execute(
+		usecase.CreateEventInput{
+			Name:           name,
+			TotalSeats:     totalSeats,
+			EndsAt:         endsAt,
+			PublicID:       publicID,
+			OrganizerEmail: email,
+			OwnerToken:     ownerToken,
+		},
+	)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		h.renderTemplate(w, "layout", RenderTemplateData{
+			Page:  "event_create",
+			Title: buildTitle("Criar evento", ""),
+			Data: EventCreateView{
+				Name:           name,
+				OrganizerEmail: email,
+				Error:          err.Error(),
+			},
+		})
+
 		return
 	}
+
+	_ = eventID
 
 	http.Redirect(w, r, "/events/"+publicID, http.StatusSeeOther)
 }
@@ -293,21 +328,21 @@ func (h *Handler) EventReservationsPage(
 	}
 
 	data := struct {
-		EventName    string
-		PublicID     string
-		TotalSeats   int
-		Reserved     int
-		Reservations []entity.Reservation
+		EventName     string
+		PublicID      string
+		TotalSeats    int
+		TotalConfirmed int
+		Reservations  []entity.Reservation
 	}{
-		EventName:    event.Name,
-		PublicID:     event.PublicID,
-		TotalSeats:   event.TotalSeats,
-		Reserved:     event.Reserved,
-		Reservations: reservations,
+		EventName:      event.Name,
+		PublicID:       event.PublicID,
+		TotalSeats:     event.TotalSeats,
+		TotalConfirmed: event.Reserved,
+		Reservations:   reservations,
 	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
-		Page:  "event_reservations",
+		Page:  "event_owner_dashboard",
 		Title: buildTitle("Reservas", event.Name),
 		Data:  data,
 	})
@@ -340,6 +375,11 @@ func (h *Handler) EventPublicPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	stats, err := h.organizerStats.Execute(ucView.OrganizerEmail)
+	if err != nil {
+		stats.EventCount = 0
+	}
+
 	baseURL := getBaseURL(r)
 
 	view := EventView{
@@ -355,6 +395,7 @@ func (h *Handler) EventPublicPage(w http.ResponseWriter, r *http.Request) {
 		PublicID:      ucView.PublicID,
 		PublicLink:    baseURL + "/e/" + ucView.PublicID,
 		LastUpdated:   time.Now().Format("15:04:05"),
+		OrganizerEventCount:  stats.EventCount,
 		OtherEvents: "Em breve: outros eventos do organizador", // Placeholder, pode ser implementado futuramente
 	}
 

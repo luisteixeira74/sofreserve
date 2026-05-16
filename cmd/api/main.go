@@ -50,6 +50,14 @@ func main() {
 		clock,
 	)
 
+	createEventUC := usecase.NewCreateEventUseCase(
+		eventRepo,
+	)
+
+	getOrganizerStatsUC := usecase.NewGetOrganizerStatsUseCase(
+		eventRepo,
+	)
+
 	// =====================
 	// ROUTER
 	// =====================
@@ -59,6 +67,8 @@ func main() {
 		eventViewUC,
 		eventRepo,
 		reservationRepo,
+		createEventUC,
+		getOrganizerStatsUC,
 		database,
 	)
 

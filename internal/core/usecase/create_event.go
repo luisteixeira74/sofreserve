@@ -1,26 +1,30 @@
 package usecase
 
 import (
-	coreErr "sof-reserve/internal/core/errors"
 	"time"
+
+	"sof-reserve/internal/core/entity"
+	coreErr "sof-reserve/internal/core/errors"
+	"sof-reserve/internal/core/port"
 )
 
-type EventRepository interface {
-	Create(name string, totalSeats int, endsAt time.Time) (int, error)
-}
-
 type CreateEventUseCase struct {
-	repo EventRepository
+	repo port.EventRepository
 }
 
-func NewCreateEventUseCase(repo EventRepository) *CreateEventUseCase {
-	return &CreateEventUseCase{repo: repo}
+func NewCreateEventUseCase(repo port.EventRepository) *CreateEventUseCase {
+	return &CreateEventUseCase{
+		repo: repo,
+	}
 }
 
 type CreateEventInput struct {
-	Name       string
-	TotalSeats int
-	EndsAt     time.Time
+	Name           string
+	TotalSeats     int
+	EndsAt         time.Time
+	PublicID       string
+	OrganizerEmail string
+	OwnerToken     string
 }
 
 func (uc *CreateEventUseCase) Execute(input CreateEventInput) (int, error) {
@@ -37,9 +41,14 @@ func (uc *CreateEventUseCase) Execute(input CreateEventInput) (int, error) {
 		return 0, coreErr.ErrEventClosed
 	}
 
-	return uc.repo.Create(
-		input.Name,
-		input.TotalSeats,
-		input.EndsAt,
-	)
+	event := entity.Event{
+		Name:           input.Name,
+		TotalSeats:     input.TotalSeats,
+		EndsAt:         input.EndsAt,
+		PublicID:       input.PublicID,
+		OrganizerEmail: input.OrganizerEmail,
+		OwnerToken:     input.OwnerToken,
+	}
+
+	return uc.repo.Create(event)
 }

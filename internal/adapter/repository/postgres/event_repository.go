@@ -13,6 +13,26 @@ func NewEventRepository(db *sql.DB) *EventRepository {
 	return &EventRepository{db: db}
 }
 
+func (r *EventRepository) Create(event entity.Event) (int, error) {
+	var eventID int
+
+	err := r.db.QueryRow(`
+		INSERT INTO events
+		(name, total_seats, ends_at, public_id, organizer_email, owner_token)
+		VALUES ($1,$2,$3,$4,$5,$6)
+		RETURNING id
+	`,
+		event.Name,
+		event.TotalSeats,
+		event.EndsAt,
+		event.PublicID,
+		event.OrganizerEmail,
+		event.OwnerToken,
+	).Scan(&eventID)
+
+	return eventID, err
+}
+
 func (r *EventRepository) GetByID(id int) (entity.Event, error) {
 	var e entity.Event
 
@@ -100,4 +120,16 @@ func (r *EventRepository) FindByOwnerToken(token string) (entity.Event, error) {
 	}
 
 	return event, nil
+}
+
+func (r *EventRepository) CountByOrganizerEmail(email string) (int, error) {
+	var count int
+
+	err := r.db.QueryRow(`
+		SELECT COUNT(*)
+		FROM events
+		WHERE organizer_email = $1
+	`, email).Scan(&count)
+
+	return count, err
 }
