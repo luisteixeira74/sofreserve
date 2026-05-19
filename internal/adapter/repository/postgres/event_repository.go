@@ -122,7 +122,7 @@ func (r *EventRepository) FindByOwnerToken(token string) (entity.Event, error) {
 	return event, nil
 }
 
-func (r *EventRepository) CountByOrganizerEmail(email string) (int, error) {
+func (r *EventRepository) CountEventsByOrganizerEmail(email string) (int, error) {
 	var count int
 
 	err := r.db.QueryRow(`

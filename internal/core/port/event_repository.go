@@ -10,6 +10,6 @@ type EventRepository interface {
 	GetByPublicID(publicID string) (entity.Event, error)
 	FindByIDForUpdate(tx *sql.Tx, id int) (entity.Event, error)
 	FindByOwnerToken(token string) (entity.Event, error)
-	CountByOrganizerEmail(email string) (int, error)
+	CountEventsByOrganizerEmail(email string) (int, error)
 	Create(event entity.Event) (int, error)
 }

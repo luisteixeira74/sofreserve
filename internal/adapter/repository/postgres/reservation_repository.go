@@ -99,11 +99,22 @@ func (r *ReservationRepository) UpdateStatus(
 	status string,
 ) error {
 
-	_, err := tx.Exec(`
+	query := `
 		UPDATE reservations
-		SET status = $1
+		SET
+			status = $1,
+			confirmed_at = CASE
+				WHEN $1 = 'confirmed' THEN NOW()
+				ELSE confirmed_at
+			END,
+			canceled_at = CASE
+				WHEN $1 = 'canceled' THEN NOW()
+				ELSE canceled_at
+			END
 		WHERE id = $2
-	`, status, id)
+	`
+
+	_, err := tx.Exec(query, status, id)
 
 	return err
 }

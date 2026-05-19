@@ -25,6 +25,21 @@
 
     <br />
 
+    <p class="muted">
+      <span class="prompt">&gt;</span>
+      QR-Code para check-in do evento
+    </p>
+
+    <div class="qr-wrapper">
+      <img
+        src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={{.Data.QRCodeURL}}"
+        alt="QR Code"
+        class="qr-code"
+      />
+    </div>
+
+    <br />
+
     <p class="muted typing-msg">
       <span class="prompt">&gt;</span>
       Gerando link de cancelamento...

@@ -83,6 +83,7 @@ type ReservationCancelView struct {
 	Message   string
 	EventID   int
 	EventName string
+	PublicLink string
 }
 
 type EventCreateView struct {
@@ -287,6 +288,11 @@ func (h *Handler) EventPageByPublicID(w http.ResponseWriter, r *http.Request) {
 		percentage = (ucView.Reserved * 100) / ucView.TotalSeats
 	}
 
+	stats, err := h.organizerStats.Execute(ucView.OrganizerEmail)
+	if err != nil {
+		stats.EventCount = 0
+	}
+
 	view := EventView{
 		ID:            ucView.ID,
 		Name:          ucView.Name,
@@ -299,8 +305,9 @@ func (h *Handler) EventPageByPublicID(w http.ResponseWriter, r *http.Request) {
 		IsClosed:      ucView.IsClosed,
 		PublicID:      ucView.PublicID,
 		PublicLink:    baseURL + "/e/" + ucView.PublicID,
+		OrganizerEmail: ucView.OrganizerEmail,
+		OrganizerEventCount: stats.EventCount,
 		LastUpdated:   time.Now().Format("15:04:05"),
-		OtherEvents: "Em breve: outros eventos do organizador", // Placeholder, pode ser implementado futuramente
 	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
@@ -375,11 +382,6 @@ func (h *Handler) EventPublicPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stats, err := h.organizerStats.Execute(ucView.OrganizerEmail)
-	if err != nil {
-		stats.EventCount = 0
-	}
-
 	baseURL := getBaseURL(r)
 
 	view := EventView{
@@ -395,7 +397,6 @@ func (h *Handler) EventPublicPage(w http.ResponseWriter, r *http.Request) {
 		PublicID:      ucView.PublicID,
 		PublicLink:    baseURL + "/e/" + ucView.PublicID,
 		LastUpdated:   time.Now().Format("15:04:05"),
-		OrganizerEventCount:  stats.EventCount,
 		OtherEvents: "Em breve: outros eventos do organizador", // Placeholder, pode ser implementado futuramente
 	}
 
@@ -600,61 +601,67 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback()
 
-	var eventID int
+	var view ReservationCancelView
 	var status string
 
 	err = tx.QueryRow(`
-		SELECT event_id, status FROM reservations WHERE token=$1 FOR UPDATE
-	`, token).Scan(&eventID, &status)
+		SELECT
+			r.event_id,
+			r.status,
+			e.name,
+			e.public_link
+		FROM reservations r
+		JOIN events e ON e.id = r.event_id
+		WHERE r.token = $1
+		FOR UPDATE
+	`, token).Scan(
+		&view.EventID,
+		&status,
+		&view.EventName,
+		&view.PublicLink,
+	)
 
 	if err != nil {
 		http.Error(w, "não encontrado", http.StatusNotFound)
 		return
 	}
 
-	var eventName string
-
-	errEvent := tx.QueryRow(`
-		SELECT name FROM events WHERE id=$1
-	`, eventID).Scan(&eventName)
-
-	if errEvent != nil {
-		fmt.Println("erro ao buscar nome do evento:", errEvent)
-		eventName = "Evento"
-	}
-
 	if entity.ReservationStatus(status) == entity.StatusCanceled {
+		view.Message = "Já cancelada"
+
 		_ = tx.Commit()
+
 		h.renderTemplate(w, "layout", RenderTemplateData{
 			Page:  "reservation_cancel",
 			Title: buildTitle("Cancelado", ""),
-			Data: ReservationCancelView{
-				Message:   "Já cancelada",
-				EventID:   eventID,
-				EventName: eventName,
-			},
+			Data:  view,
 		})
+
 		return
 	}
 
-	_, _ = tx.Exec(`
-		UPDATE reservations SET status=$1 WHERE token=$2
+	_, err = tx.Exec(`
+		UPDATE reservations
+		SET status = $1
+		WHERE token = $2
 	`, string(entity.StatusCanceled), token)
 
-	_ = tx.Commit()
+	if err != nil {
+		http.Error(w, "erro ao cancelar reserva", http.StatusInternalServerError)
+		return
+	}
 
+	view.Message = "Cancelado com sucesso"
 
-	// fmt.Println("DEBUG eventID:", eventID)
-	// fmt.Println("DEBUG eventName:", eventName)
+	if err := tx.Commit(); err != nil {
+		http.Error(w, "erro interno", http.StatusInternalServerError)
+		return
+	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page:  "reservation_cancel",
 		Title: buildTitle("Cancelado", ""),
-		Data: ReservationCancelView{
-			Message: "Cancelado com sucesso",
-			EventID: eventID,
-			EventName: eventName,
-		},
+		Data:  view,
 	})
 }
 

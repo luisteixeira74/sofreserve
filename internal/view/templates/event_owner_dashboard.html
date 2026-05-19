@@ -26,7 +26,16 @@
     {{ if .Data.Reservations }} {{ range .Data.Reservations }}
     <div class="terminal-line">
       <span class="prompt">&gt;</span>
-      {{ .Name }} — {{ .Email }} — {{ .Quantity }} vaga(s)
+
+      <span class="terminal-user">{{ .Name }}</span>
+
+      <span class="terminal-separator">—</span>
+
+      <span class="terminal-email">{{ .Email }}</span>
+
+      <span class="terminal-separator">—</span>
+
+      <span class="terminal-slots"> {{ .Quantity }} vaga(s) </span>
     </div>
     {{ end }} {{ else }}
 

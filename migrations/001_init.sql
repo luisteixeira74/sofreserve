@@ -23,14 +23,16 @@ CREATE TABLE events (
 CREATE TABLE reservations (
     id SERIAL PRIMARY KEY,
     event_id INT NOT NULL REFERENCES events(id),
-
     name TEXT NOT NULL,
     email TEXT NOT NULL,
-
     quantity INT NOT NULL,
-
     status TEXT NOT NULL DEFAULT 'pending',
-    token TEXT NOT NULL,
-
+    token TEXT NOT NULL UNIQUE,
+    confirmed_at TIMESTAMP NULL,
+    canceled_at TIMESTAMP NULL;
+    checked_in_at TIMESTAMP NULL;
     created_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE INDEX idx_reservation_event_status
+ON reservations(event_id, status);

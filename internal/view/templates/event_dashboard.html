@@ -6,28 +6,25 @@
   <div class="terminal-body">
     <p>
       <span class="prompt">&gt;</span>
-      <span class="label"> Evento: {{.Data.Name}} </span>
+      <span class="label"> Evento: </span>
+      <span class="value">{{.Data.Name}}</span>
     </p>
 
     <p>
       <span class="prompt">&gt;</span>
-      <span> Status: {{if .Data.IsClosed}}Closed{{else}}Open{{end}} </span>
-    </p>
-
-    <p>
-      <span class="prompt">&gt;</span>
-      <span class="label">
-        Ocupação: {{.Data.Reserved}} / {{.Data.TotalSeats}}
+      <span class="label"> Status: </span>
+      <span class="value">
+        {{if .Data.IsClosed}}Closed{{else}}Open{{end}}
       </span>
     </p>
 
     <p>
       <span class="prompt">&gt;</span>
-      <span class="muted"> {{.Data.RemainingText}} </span>
+      <span class="label"> Ocupação: </span>
+      <span class="value"> {{.Data.Reserved}} / {{.Data.TotalSeats}} </span>
     </p>
 
     {{if gt .Data.Percentage 0}}
-
     <div class="progress-bar">
       <div
         class="progress-fill {{if lt .Data.Percentage 50}}low{{else if lt .Data.Percentage 80}}medium{{else}}high{{end}}"
@@ -36,60 +33,69 @@
         {{.Data.Percentage}}%
       </div>
     </div>
+    {{end}}
 
-    {{end}} {{if .Data.IsClosed}}
+    <p class="muted">
+      <span class="prompt">&gt;</span>
+      {{.Data.RemainingText}}
+    </p>
+
+    {{if .Data.IsClosed}}
 
     <p class="closed">EVENTO ENCERRADO</p>
 
-    {{else}} {{if .Data.ShowAlert}}
-    <p class="alert">⏳ reservas encerram em breve</p>
-    {{end}} {{if lt .Data.Available 5}}
+    {{else}} {{if and (gt .Data.Available 0) (lt .Data.Available 5)}}
     <p class="alert">⚠ Restam poucas vagas!</p>
     {{end}}
 
-    <br />
+    <div class="event-public-link">
+      <p>
+        <span class="prompt">&gt;</span>
+        <span class="label">Link público do evento:</span>
+      </p>
 
-    <p class="muted">
-      <span class="prompt">&gt;</span>
-      <span class="label">Link do evento:</span>
+      <div class="copy-wrapper">
+        <input
+          value="{{.Data.PublicLink}}"
+          readonly
+          class="input-link copy-input"
+        />
 
-      <input
-        value="{{.Data.PublicLink}}"
-        readonly
-        class="input-link"
-        onclick="this.select()"
-      />
-    </p>
+        <span class="copy-feedback">copiado!</span>
+      </div>
 
-    <br />
+      <p class="timestamp">Última atualização: {{.Data.LastUpdated}}</p>
+    </div>
 
-    <a href="/events/{{.Data.PublicID}}/reservations" class="terminal-link">
-      [ VER RESERVAS ]
-    </a>
+    <div class="dashboard-actions">
+      <a href="/events/{{.Data.PublicID}}/reservations" class="btn-terminal">
+        [ VER RESERVAS ]
+      </a>
+    </div>
 
-    <br />
+    {{end}} {{if gt .Data.OrganizerEventCount 0}}
+    <div class="dashboard-actions">
+      <div class="organizer-events">
+        <p class="muted">
+          <span class="prompt">&gt;</span>
 
-    <a
-      href="https://wa.me/?text=Acesse o evento: {{.Data.PublicLink}}"
-      target="_blank"
-      class="btn-terminal"
-    >
-      [ COMPARTILHAR NO WHATSAPP ]
-    </a>
+          Organizer workspace:
+          <strong>{{ .Data.OrganizerEventCount }}</strong>
+          eventos
+        </p>
+      </div>
+      {{end}}
+      <div class="dashboard-share">
+        <a
+          href="https://wa.me/?text=Acesse o evento: {{.Data.PublicLink}}"
+          target="_blank"
+          class="terminal-link"
+        >
+          &gt; compartilhar evento no whatsapp
+        </a>
+      </div>
+    </div>
 
     {{end}}
-
-    <br />
-
-    <p class="muted">
-      <span class="prompt">&gt;</span>
-      Outros eventos deste organizador: {{.Data.OtherEvents}}
-    </p>
-
-    <br />
-
-    <p class="muted">Última atualização: {{.Data.LastUpdated}}</p>
   </div>
 </div>
-
-{{end}}

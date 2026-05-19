@@ -17,7 +17,7 @@ type OrganizerStats struct {
 }
 
 func (uc *GetOrganizerStats) Execute(email string) (OrganizerStats, error) {
-    count, err := uc.eventRepo.CountByOrganizerEmail(email)
+    count, err := uc.eventRepo.CountEventsByOrganizerEmail(email)
     if err != nil {
         return OrganizerStats{}, err
     }
