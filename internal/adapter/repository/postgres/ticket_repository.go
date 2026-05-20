@@ -1,0 +1,159 @@
+package postgres
+
+import (
+	"database/sql"
+	"sof-reserve/internal/core/entity"
+)
+
+type TicketRepository struct {
+	db *sql.DB
+}
+
+func NewTicketRepository(db *sql.DB) *TicketRepository {
+	return &TicketRepository{db: db}
+}
+
+func (r *TicketRepository) Create(
+	tx *sql.Tx,
+	reservationID int64,
+	ticketNumber int,
+	token string,
+) error {
+
+	_, err := tx.Exec(`
+		INSERT INTO reservation_tickets
+		(reservation_id, ticket_number, token)
+		VALUES ($1, $2, $3)
+	`,
+		reservationID,
+		ticketNumber,
+		token,
+	)
+
+	return err
+}
+
+func (r *TicketRepository) FindByReservationID(
+	reservationID int64,
+) ([]entity.Ticket, error) {
+
+	rows, err := r.db.Query(`
+		SELECT
+			id,
+			reservation_id,
+			ticket_number,
+			token,
+			checked_in_at,
+			created_at
+		FROM reservation_tickets
+		WHERE reservation_id = $1
+		ORDER BY ticket_number ASC
+	`, reservationID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tickets []entity.Ticket
+
+	for rows.Next() {
+		var ticket entity.Ticket
+
+		err := rows.Scan(
+			&ticket.ID,
+			&ticket.ReservationID,
+			&ticket.TicketNumber,
+			&ticket.Token,
+			&ticket.CheckedInAt,
+			&ticket.CreatedAt,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		tickets = append(tickets, ticket)
+	}
+
+	return tickets, nil
+}
+
+func (r *TicketRepository) FindByToken(
+	token string,
+) (entity.Ticket, error) {
+
+	var ticket entity.Ticket
+
+	err := r.db.QueryRow(`
+		SELECT
+			id,
+			reservation_id,
+			ticket_number,
+			token,
+			checked_in_at,
+			created_at
+		FROM reservation_tickets
+		WHERE token = $1
+	`,
+		token,
+	).Scan(
+		&ticket.ID,
+		&ticket.ReservationID,
+		&ticket.TicketNumber,
+		&ticket.Token,
+		&ticket.CheckedInAt,
+		&ticket.CreatedAt,
+	)
+
+	return ticket, err
+}
+
+func (r *TicketRepository) FindByTokenForUpdate(
+	tx *sql.Tx,
+	token string,
+) (entity.Ticket, error) {
+
+	var ticket entity.Ticket
+
+	err := tx.QueryRow(`
+		SELECT
+			id,
+			reservation_id,
+			ticket_number,
+			token,
+			checked_in_at,
+			created_at
+		FROM reservation_tickets
+		WHERE token = $1
+		FOR UPDATE
+	`,
+		token,
+	).Scan(
+		&ticket.ID,
+		&ticket.ReservationID,
+		&ticket.TicketNumber,
+		&ticket.Token,
+		&ticket.CheckedInAt,
+		&ticket.CreatedAt,
+	)
+
+	return ticket, err
+}
+
+func (r *TicketRepository) CheckIn(
+	tx *sql.Tx,
+	token string,
+) error {
+
+	_, err := tx.Exec(`
+		UPDATE reservation_tickets
+		SET checked_in_at = NOW()
+		WHERE token = $1
+		AND checked_in_at IS NULL
+	`,
+		token,
+	)
+
+	return err
+}

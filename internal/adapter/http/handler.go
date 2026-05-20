@@ -112,6 +112,7 @@ type Handler struct {
 	reservationRepo port.ReservationRepository
 	organizerStats *usecase.GetOrganizerStats
 	db *sql.DB
+	checkinTicket *usecase.CheckinTicket
 }
 
 // =====================
@@ -707,11 +708,42 @@ func (h *Handler) OwnerDashboard(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) OwnerCheckin(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) OwnerCheckin(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	token := r.URL.Query().Get("token")
+
+	err := h.checkinTicket.Execute(token)
+
+	if err != nil {
+
+		if errors.Is(err, usecase.ErrTicketAlreadyCheckedIn) {
+
+			h.renderTemplate(w, "layout", RenderTemplateData{
+				Page:  "checkin_already_used",
+				Title: buildTitle("Confirmação de Check-in", ""),
+				Data:  token,
+			})
+
+			return
+		}
+
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page:  "checkin_success",
+		Title: buildTitle("Confirmação de Check-in", ""),
+		Data:  token,
+	})
 }
 
 func getBaseURL(r *http.Request) string {
