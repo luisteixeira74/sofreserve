@@ -19,24 +19,41 @@
       <span class="value">{{.Data.Quantity}}</span>
     </p>
 
-    <p class="success">{{.Data.Message}}</p>
-
-    <br />
-
-    <br />
-
-    <p class="muted">
+    <p>
       <span class="prompt">&gt;</span>
-      QR-Code para check-in do evento
+      <span class="label">Quantidade:</span>
+      Tickets para check-in individual no evento
     </p>
 
-    <div class="qr-wrapper">
-      <img
-        src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={{.Data.QRCodeURL}}"
-        alt="QR Code"
-        class="qr-code"
-      />
+    <br />
+
+    <br />
+
+    {{ range .Data.Tickets }}
+
+    <div class="ticket-terminal-block">
+      <p class="muted">
+        <span class="prompt">&gt;</span>
+        Ticket #{{ .Number }}
+      </p>
+
+      <p>
+        <span class="label">TOKEN:</span>
+        <span class="value">{{ .Token }}</span>
+      </p>
+
+      <a
+        href="https://wa.me/?text={{ .WhatsAppMessage }}"
+        target="_blank"
+        class="terminal-link"
+      >
+        &gt; compartilhar via whatsapp
+      </a>
     </div>
+
+    <br />
+
+    {{ end }}
 
     <br />
 

@@ -1,46 +1,147 @@
 {{ define "event_owner_dashboard" }}
 
 <div class="terminal-card">
-  <div class="terminal-header">Painel do organizador • SofReserve</div>
+  <div class="terminal-header">
+    Painel do organizador • SofReserve
+  </div>
 
   <div class="terminal-body">
-    <a href="javascript:history.back()" class="btn btn-preset"> ← Voltar </a>
+    <a href="javascript:history.back()" class="btn btn-preset">
+      ← Voltar
+    </a>
 
     <br /><br />
 
-    <!-- resto do conteúdo -->
-    <p>
-      <span class="prompt">&gt;</span>
-      <span class="label">Evento:</span>
-      {{ .Data.EventName }}
-    </p>
+    <div class="dashboard-tabs">
+      <a
+        href="/events/{{ .Data.PublicID }}/reservations?tab=reservations"
+        class="tab-link {{ if eq .Data.ActiveTab "reservations" }}tab-active{{ end }}"
+      >
+        Reservas
+      </a>
 
-    <p>
-      <span class="prompt">&gt;</span>
-      <span class="label">Total confirmado:</span>
-      {{ .Data.TotalConfirmed }} / {{ .Data.TotalSeats }}
-    </p>
+      <a
+        href="/events/{{ .Data.PublicID }}/reservations?tab=checkin"
+        class="tab-link {{ if eq .Data.ActiveTab "checkin" }}tab-active{{ end }}"
+      >
+        Check-in
+      </a>
+    </div>
 
     <br />
 
-    {{ if .Data.Reservations }} {{ range .Data.Reservations }}
-    <div class="terminal-line">
-      <span class="prompt">&gt;</span>
+    {{ if eq .Data.ActiveTab "reservations" }}
 
-      <span class="terminal-user">{{ .Name }}</span>
+      <p>
+        <span class="prompt">&gt;</span>
+        <span class="label">Evento:</span>
+        {{ .Data.EventName }}
+      </p>
 
-      <span class="terminal-separator">—</span>
+      <p>
+        <span class="prompt">&gt;</span>
+        <span class="label">Total confirmado:</span>
+        {{ .Data.TotalConfirmed }} / {{ .Data.TotalSeats }}
+      </p>
 
-      <span class="terminal-email">{{ .Email }}</span>
+      <br />
 
-      <span class="terminal-separator">—</span>
+      {{ if .Data.Reservations }}
 
-      <span class="terminal-slots"> {{ .Quantity }} vaga(s) </span>
+        {{ range .Data.Reservations }}
+        <div class="terminal-line">
+          <span class="prompt">&gt;</span>
+
+          <span class="terminal-user">{{ .Name }}</span>
+
+          <span class="terminal-separator">—</span>
+
+          <span class="terminal-email">{{ .Email }}</span>
+
+          <span class="terminal-separator">—</span>
+
+          <span class="terminal-slots">
+            {{ .Quantity }} vaga(s)
+          </span>
+        </div>
+        {{ end }}
+
+      {{ else }}
+
+        <p class="muted">
+          Nenhuma reserva confirmada até o momento.
+        </p>
+
+      {{ end }}
+
+    {{ end }}
+
+    {{ if eq .Data.ActiveTab "checkin" }}
+
+      <div class="checkin-container">
+
+      <div class="terminal-card">
+        <div class="terminal-header">
+          CHECK-IN
+        </div>
+
+        <form
+          method="POST"
+          action="/events/{{ .Data.PublicID }}/reservations?tab=checkin"
+        >
+          <input
+            type="text"
+            name="token"
+            placeholder="reservation token"
+            autofocus
+          />
+
+          <button type="submit">
+            Confirmar entrada
+          </button>
+        </form>
+
+        {{ if .Data.CheckinMessage }}
+          <div class="checkin-status success">
+            ✔ ACCESS GRANTED
+          </div>
+        {{ end }}
+
+        {{ if .Data.CheckinError }}
+          <div class="checkin-status error">
+            ✖ INVALID TOKEN
+          </div>
+        {{ end }}
+      </div>
+
+      <div class="terminal-card">
+        <div class="terminal-header">
+          Últimos check-ins
+        </div>
+
+        {{ if .Data.LastCheckins }}
+
+          {{ range .Data.LastCheckins }}
+            <div class="checkin-item">
+              <span class="terminal-user">
+                {{ .GuestName }}
+              </span>
+
+              <span class="terminal-separator">—</span>
+
+              <span class="muted">
+                confirmado agora
+              </span>
+            </div>
+          {{ end }}
+        {{ else }}
+
+          <p class="muted">
+            Nenhum check-in realizado ainda.
+          </p>
+        {{ end }}
+      </div>
     </div>
-    {{ end }} {{ else }}
-
-    <p class="muted">Nenhuma reserva confirmada até o momento.</p>
-
     {{ end }}
   </div>
 </div>

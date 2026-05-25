@@ -63,17 +63,6 @@ type RenderTemplateData struct {
 	Data  any
 }
 
-type ReservationConfirmedView struct {
-	EventName string
-	Name      string
-	Email     string
-	Quantity  int
-	Token     string
-	Message   string
-	Status    string
-	CancelLink string
-}
-
 type ReservationErrorView struct {
 	Message string
 	Status  string
@@ -99,6 +88,43 @@ type OwnerDashboardView struct {
 	Reservations  []entity.Reservation
 }
 
+type EventOwnerDashboardView struct {
+	EventName      string
+	PublicID       string
+	TotalSeats     int
+	TotalConfirmed int
+	Reservations   []entity.Reservation
+	ActiveTab      string
+}
+
+type ReservationTicketView struct {
+	Token     string
+	QRCodeURL string
+	Number    int
+}
+
+type ReservationConfirmedView struct {
+	EventName string
+	Name      string
+	Email     string
+	Quantity  int
+	Message   string
+	Status    string
+	CancelLink string
+	Tickets []ReservationTicketView
+}
+
+type TicketViewData struct {
+	EventName    string
+	Token        string
+	TicketNumber int
+
+	QRCodeURL    string
+
+	IsCheckedIn  bool
+	CheckedInAt  *time.Time
+}
+
 // =====================
 // HANDLER
 // =====================
@@ -113,6 +139,7 @@ type Handler struct {
 	organizerStats *usecase.GetOrganizerStats
 	db *sql.DB
 	checkinTicket *usecase.CheckinTicket
+	ticketRepo port.TicketRepository
 }
 
 // =====================
@@ -323,6 +350,11 @@ func (h *Handler) EventReservationsPage(
 	r *http.Request,
 	publicID string,
 ) {
+	tab := r.URL.Query().Get("tab")
+	if tab == "" {
+		tab = "reservations"
+	}
+
 	event, err := h.eventViewUC.ExecuteByPublicID(publicID)
 	if err != nil {
 		http.NotFound(w, r)
@@ -335,18 +367,13 @@ func (h *Handler) EventReservationsPage(
 		return
 	}
 
-	data := struct {
-		EventName     string
-		PublicID      string
-		TotalSeats    int
-		TotalConfirmed int
-		Reservations  []entity.Reservation
-	}{
+	data := EventOwnerDashboardView{
 		EventName:      event.Name,
 		PublicID:       event.PublicID,
 		TotalSeats:     event.TotalSeats,
 		TotalConfirmed: event.Reserved,
 		Reservations:   reservations,
+		ActiveTab:      tab,
 	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
@@ -566,20 +593,57 @@ func (h *Handler) ConfirmReservation(w http.ResponseWriter, r *http.Request) {
 
 	baseURL := getBaseURL(r)
 
-	cancelLink := baseURL + "/cancel?token=" + output.Token
+	cancelLink := baseURL + "/cancel?token=" + output.ReservationToken
+
+	rows, err := h.db.Query(`
+		SELECT
+			ticket_number,
+			token
+		FROM reservation_tickets
+		WHERE reservation_id = $1
+		ORDER BY ticket_number
+	`, output.ReservationID)
+
+	if err != nil {
+		http.Error(w, "erro ao carregar tickets", http.StatusInternalServerError)
+		return
+	}
+
+	defer rows.Close()
+
+	var tickets []ReservationTicketView
+
+	for rows.Next() {
+		var ticket ReservationTicketView
+
+		err := rows.Scan(
+			&ticket.Number,
+			&ticket.Token,
+		)
+
+		if err != nil {
+			http.Error(w, "erro ao processar tickets", http.StatusInternalServerError)
+			return
+		}
+
+		ticket.QRCodeURL =
+			baseURL + "/checkin/" + ticket.Token
+
+		tickets = append(tickets, ticket)
+	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page:  "reservation_confirmed",
 		Title: buildTitle("Confirmado", ""),
 		Data: ReservationConfirmedView{
-			EventName: eventName,
-			Name:      output.Name,
-			Email:     output.Email,
-			Quantity:  output.Quantity,
-			Token:     output.Token,
-			Message:   output.Message,
-			Status:    output.Status,
+			EventName:  eventName,
+			Name:       output.Name,
+			Email:      output.Email,
+			Quantity:   output.Quantity,
+			Message:    output.Message,
+			Status:     output.Status,
 			CancelLink: cancelLink,
+			Tickets:    tickets,
 		},
 	})
 }
@@ -705,6 +769,33 @@ func (h *Handler) OwnerDashboard(w http.ResponseWriter, r *http.Request) {
 		Page:  "event_details_dashboard",
 		Title: buildTitle("Owner Dashboard", event.Name),
 		Data:  view,
+	})
+}
+
+func (h *Handler) TicketView(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+
+	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+
+	if len(parts) < 2 {
+		http.NotFound(w, r)
+		return
+	}
+
+	token := parts[1]
+
+	ticket, err := h.ticketRepo.FindTicketViewByToken(token)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	h.renderTemplate(w, "layout", RenderTemplateData{
+		Page:  "ticket_view",
+		Title: buildTitle("Ticket", ""),
+		Data:  ticket,
 	})
 }
 

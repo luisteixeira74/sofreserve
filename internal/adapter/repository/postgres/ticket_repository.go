@@ -157,3 +157,37 @@ func (r *TicketRepository) CheckIn(
 
 	return err
 }
+
+func (r *TicketRepository) FindTicketViewByToken(
+	token string,
+) (entity.TicketView, error) {
+
+	var ticket entity.TicketView
+
+	err := r.db.QueryRow(`
+		SELECT
+			e.name,
+			t.token,
+			t.ticket_number,
+			t.checked_in_at
+		FROM reservation_tickets t
+		JOIN reservations r
+			ON r.id = t.reservation_id
+		JOIN events e
+			ON e.id = r.event_id
+		WHERE t.token = $1
+	`,
+		token,
+	).Scan(
+		&ticket.EventName,
+		&ticket.Token,
+		&ticket.TicketNumber,
+		&ticket.CheckedInAt,
+	)
+
+	if err != nil {
+		return entity.TicketView{}, err
+	}
+
+	return ticket, nil
+}

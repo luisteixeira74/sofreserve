@@ -1,0 +1,87 @@
+{{ define "ticket_view" }}
+
+<div class="terminal-card">
+  <div class="terminal-header">Ticket de acesso • SofReserve</div>
+
+  <div class="terminal-body">
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Evento:</span>
+      <span class="value">{{ .Data.EventName }}</span>
+    </p>
+
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Ticket:</span>
+      <span class="value">#{{ .Data.TicketNumber }}</span>
+    </p>
+
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Token:</span>
+      <span class="value">{{ .Data.Token }}</span>
+    </p>
+
+    <br />
+
+    <div class="ticket-terminal-box">
+      <pre class="ascii-ticket">
++--------------------------------------+
+|         SOFRESERVE ACCESS            |
++--------------------------------------+
+|                                      |
+|  EVENT: {{ .Data.EventName }}        
+|                                      |
+|  TICKET: #{{ .Data.TicketNumber }}                     
+|                                      |
+|  TOKEN: {{ .Data.Token }}            
+|                                      |
++--------------------------------------+
+      </pre>
+    </div>
+
+    <br />
+
+    <div class="qr-wrapper">
+      <img
+        src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={{ .Data.QRCodeURL }}"
+        alt="QR Code"
+        class="qr-code"
+      />
+    </div>
+
+    <br />
+
+    {{ if .Data.IsCheckedIn }}
+
+    <p class="success">
+      <span class="prompt">&gt;</span>
+      Check-in realizado
+    </p>
+
+    {{ else }}
+
+    <p class="muted">
+      <span class="prompt">&gt;</span>
+      Ticket válido para entrada
+    </p>
+
+    {{ end }}
+
+    <br />
+
+    <div class="terminal-note">
+      <p class="muted">
+        <span class="prompt">&gt;</span>
+        Apresente este QR-Code na entrada do evento.
+      </p>
+
+      <p class="muted">
+        <span class="prompt">&gt;</span>
+        Cada participante possui um ticket individual.
+      </p>
+    </div>
+  </div>
+</div>
+
+{{ end }}

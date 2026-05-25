@@ -30,4 +30,8 @@ type TicketRepository interface {
 		tx *sql.Tx,
 		ticketID int64,
 	) error
+
+	FindTicketViewByToken(
+		token string,
+	) (entity.TicketView, error)
 }

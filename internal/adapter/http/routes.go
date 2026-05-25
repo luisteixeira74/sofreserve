@@ -10,24 +10,32 @@ import (
 )
 
 func NewRouter(
-	createReservationUC *usecase.CreateReservationUseCase,
-	confirmUC *usecase.ConfirmReservationUseCase,
-	eventViewUC *usecase.GetEventViewUseCase,
-	eventRepo port.EventRepository,
-	reservationRepo port.ReservationRepository,
-	createEventUC *usecase.CreateEventUseCase,
-	getOrganizerStats *usecase.GetOrganizerStats,
-	db *sql.DB,
-) http.Handler {
+		createReservationUC *usecase.CreateReservationUseCase,
+		confirmUC *usecase.ConfirmReservationUseCase,
+		eventViewUC *usecase.GetEventViewUseCase,
+		
+		eventRepo port.EventRepository,
+		reservationRepo port.ReservationRepository,
+		ticketRepo port.TicketRepository,
+
+		createEventUC *usecase.CreateEventUseCase,
+		getOrganizerStats *usecase.GetOrganizerStats,
+		
+		db *sql.DB,
+	) http.Handler {
 
 	handler := &Handler{
 		reserveUC:       createReservationUC,
 		confirmUC:       confirmUC,
 		eventViewUC:     eventViewUC,
+
 		eventRepo:       eventRepo,
 		reservationRepo: reservationRepo,
+		ticketRepo:      ticketRepo,
+
 		createEventUC:   createEventUC,
-		organizerStats: getOrganizerStats,
+		organizerStats:  getOrganizerStats,
+
 		db:              db,
 	}
 
@@ -68,6 +76,8 @@ func NewRouter(
 	// confirm / cancel
 	mux.HandleFunc("/confirm", handler.ConfirmReservation)
 	mux.HandleFunc("/cancel", handler.CancelReservation)
+
+	mux.HandleFunc("/ticket/", handler.TicketView)
 
 	// assets
 	fs := http.FileServer(http.Dir("./internal/view/assets"))
