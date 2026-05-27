@@ -106,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!btn) return;
 
-  // 👉 pega token do HTML (correto)
+  // pega token do HTML (correto)
   const token = btn.dataset.token;
 
   btn.addEventListener("click", () => {
@@ -151,3 +151,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
+const steps = document.querySelectorAll(".hero-flow .step");
+
+let i = 0;
+
+function activateStep(index) {
+  steps.forEach((s) => s.classList.remove("active"));
+  steps[index].classList.add("active");
+}
+
+// delay inicial (6s)
+setTimeout(() => {
+  activateStep(0);
+
+  setInterval(() => {
+    i = (i + 1) % steps.length;
+    activateStep(i);
+  }, 3000);
+}, 6000);

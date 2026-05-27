@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"sof-reserve/internal/core/port"
 	"sof-reserve/internal/core/usecase"
 	"sof-reserve/internal/shared/id"
+	"sof-reserve/internal/shared/message"
 	"sof-reserve/internal/shared/security"
 )
 
@@ -95,12 +97,22 @@ type EventOwnerDashboardView struct {
 	TotalConfirmed int
 	Reservations   []entity.Reservation
 	ActiveTab      string
+
+	// CHECK-IN
+	CheckinMessage string
+	CheckinError   string
+	LastCheckins   []LastCheckin
+}
+
+type LastCheckin struct {
+	GuestName string
 }
 
 type ReservationTicketView struct {
 	Token     string
 	QRCodeURL string
 	Number    int
+	WhatsAppLink string
 }
 
 type ReservationConfirmedView struct {
@@ -119,7 +131,9 @@ type TicketViewData struct {
 	Token        string
 	TicketNumber int
 
-	QRCodeURL    string
+	TicketURL    string
+	CheckinURL   string
+	WhatsAppLink string
 
 	IsCheckedIn  bool
 	CheckedInAt  *time.Time
@@ -146,9 +160,17 @@ type Handler struct {
 // TEMPLATE
 // =====================
 
-func (h *Handler) renderTemplate(w http.ResponseWriter, name string, data RenderTemplateData) {
+func (h *Handler) renderTemplate(
+	w http.ResponseWriter,
+	name string,
+	data RenderTemplateData,
+) {
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
 	if err := tmpl.ExecuteTemplate(w, name, data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("template error:", err)
+		return
 	}
 }
 
@@ -627,7 +649,19 @@ func (h *Handler) ConfirmReservation(w http.ResponseWriter, r *http.Request) {
 		}
 
 		ticket.QRCodeURL =
-			baseURL + "/checkin/" + ticket.Token
+			baseURL + "/ticket/" + ticket.Token
+
+		ticketView := entity.TicketView{
+			EventName:    eventName,
+			Token:        ticket.Token,
+			TicketNumber: ticket.Number,
+		}
+
+		ticket.WhatsAppLink =
+			message.BuildTicketWhatsAppMessage(
+				baseURL,
+				ticketView,
+			)
 
 		tickets = append(tickets, ticket)
 	}
@@ -731,43 +765,62 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) OwnerDashboard(w http.ResponseWriter, r *http.Request) {
+
 	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-
-	if len(parts) != 2 {
+	if len(parts) < 2 {
 		http.NotFound(w, r)
 		return
 	}
 
-	token := parts[1]
+	publicID := parts[1]
 
-	event, err := h.eventRepo.FindByOwnerToken(token)
+	tab := r.URL.Query().Get("tab")
+	if tab == "" {
+		tab = "reservations"
+	}
+
+	// =====================
+	// EVENTO
+	// =====================
+	eventView, err := h.eventViewUC.ExecuteByPublicID(publicID)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	reservations, err := h.reservationRepo.FindConfirmedByEventID(event.ID)
+	// =====================
+	// RESERVAS CONFIRMADAS
+	// =====================
+	reservations, err := h.reservationRepo.FindConfirmedByEventID(eventView.ID)
 	if err != nil {
-		http.Error(w, "erro interno", http.StatusInternalServerError)
+		http.Error(w, "failed to load reservations", http.StatusInternalServerError)
 		return
 	}
 
-	totalConfirmed := 0
-
-	for _, reservation := range reservations {
-		totalConfirmed += reservation.Quantity
+	// =====================
+	// TOTAL CONFIRMADO (CORRETO)
+	// =====================
+	totalConfirmed, err := h.reservationRepo.SumByEventID(eventView.ID)
+	if err != nil {
+		http.Error(w, "failed to calculate totals", http.StatusInternalServerError)
+		return
 	}
 
-	view := OwnerDashboardView{
-		EventName:      event.Name,
-		TotalSeats:     event.TotalSeats,
+	// =====================
+	// VIEW
+	// =====================
+	view := EventOwnerDashboardView{
+		EventName:      eventView.Name,
+		PublicID:       publicID,
+		TotalSeats:     eventView.TotalSeats,
 		TotalConfirmed: totalConfirmed,
 		Reservations:   reservations,
+		ActiveTab:      tab,
 	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
-		Page:  "event_details_dashboard",
-		Title: buildTitle("Owner Dashboard", event.Name),
+		Page:  "event_owner_dashboard",
+		Title: buildTitle("Reservas", eventView.Name),
 		Data:  view,
 	})
 }
@@ -792,10 +845,28 @@ func (h *Handler) TicketView(
 		return
 	}
 
+	baseURL := getBaseURL(r)
+
+	view := TicketViewData{
+		EventName:    ticket.EventName,
+		Token:        ticket.Token,
+		TicketNumber: ticket.TicketNumber,
+
+		TicketURL:  baseURL + "/ticket/" + ticket.Token,
+		CheckinURL: baseURL + "/manage/checkin?token=" + ticket.Token,
+		WhatsAppLink: message.BuildTicketWhatsAppMessage(
+			baseURL,
+			ticket,
+		),
+
+		IsCheckedIn: ticket.CheckedInAt != nil,
+		CheckedInAt: ticket.CheckedInAt,
+	}
+
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page:  "ticket_view",
 		Title: buildTitle("Ticket", ""),
-		Data:  ticket,
+		Data:  view,
 	})
 }
 
@@ -876,4 +947,21 @@ func (h *Handler) parseReservationInput(r *http.Request) (int, int, string, stri
 	}
 
 	return eventID, qty, name, email, nil
+}
+
+func (h *Handler) buildOwnerDashboard(
+	event entity.Event,
+	reservations []entity.Reservation,
+	totalConfirmed int,
+	tab string,
+) EventOwnerDashboardView {
+
+	return EventOwnerDashboardView{
+		EventName:      event.Name,
+		PublicID:       event.PublicID,
+		TotalSeats:     event.TotalSeats,
+		TotalConfirmed: totalConfirmed,
+		Reservations:   reservations,
+		ActiveTab:      tab,
+	}
 }

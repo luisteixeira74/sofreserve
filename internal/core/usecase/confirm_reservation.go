@@ -5,9 +5,8 @@ import (
 	"errors"
 	"sof-reserve/internal/core/entity"
 	coreErr "sof-reserve/internal/core/errors"
+	"sof-reserve/internal/shared/security"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type ConfirmReservationUseCase struct {
@@ -149,72 +148,47 @@ func (uc *ConfirmReservationUseCase) Execute(token string) (*ConfirmReservationO
 	}
 
 	// =====================
-	// UPDATE
-	// =====================
-	_, err = tx.Exec(`
-		UPDATE reservations
-		SET status = $1
-		WHERE token = $2
-	`,
-		string(entity.StatusConfirmed),
-		token,
-	)
+// UPDATE
+// =====================
+_, err = tx.Exec(`
+	UPDATE reservations
+	SET status = $1
+	WHERE token = $2
+`,
+	string(entity.StatusConfirmed),
+	token,
+)
 
-	if err != nil {
-		return nil, err
-	}
-
-	for i := 1; i <= quantity; i++ {
-
-		ticketToken := generateTicketToken()
-
-		_, err = tx.Exec(`
-			INSERT INTO reservation_tickets (
-				reservation_id,
-				ticket_number,
-				token
-			)
-			VALUES ($1, $2, $3)
-		`,
-			reservationID,
-			i,
-			ticketToken,
-		)
-
-		if err != nil {
-			return nil, err
-		}
-
-		tickets = append(tickets, ReservationTicketOutput{
-			Number: i,
-			Token:  ticketToken,
-		})
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
-
-	return &ConfirmReservationOutput{
-		ReservationID: reservationID,
-		ReservationToken: reservationToken,
-		Message:  "Reserva confirmada com sucesso!",
-		Name:     name,
-		Email:    email,
-		Quantity: quantity,
-		EventID:  eventID,
-		Status:   string(entity.StatusConfirmed),
-		Tickets: tickets,
-	}, nil
+if err != nil {
+	return nil, err
 }
 
-func generateTicketToken() string {
-	return uuid.NewString()
+tickets, err = uc.generateTickets(
+	tx,
+	reservationID,
+	quantity,
+)
+
+if err != nil {
+	return nil, err
 }
+
+if err := tx.Commit(); err != nil {
+	return nil, err
+}
+
+return &ConfirmReservationOutput{
+	ReservationID:    reservationID,
+	ReservationToken: reservationToken,
+	Message:          "Reserva confirmada com sucesso!",
+	Name:             name,
+	Email:            email,
+	Quantity:         quantity,
+	EventID:          eventID,
+	Status:           string(entity.StatusConfirmed),
+	Tickets:          tickets,
+}, nil}
+
 
 func (uc *ConfirmReservationUseCase) loadReservationTickets(
 	tx *sql.Tx,
@@ -251,6 +225,44 @@ func (uc *ConfirmReservationUseCase) loadReservationTickets(
 		}
 
 		tickets = append(tickets, ticket)
+	}
+
+	return tickets, nil
+}
+
+func (uc *ConfirmReservationUseCase) generateTickets(
+	tx *sql.Tx,
+	reservationID int,
+	quantity int,
+) ([]ReservationTicketOutput, error) {
+
+	var tickets []ReservationTicketOutput
+
+	for i := 1; i <= quantity; i++ {
+
+		ticketToken := security.GenerateTicketToken()
+
+		_, err := tx.Exec(`
+			INSERT INTO reservation_tickets (
+				reservation_id,
+				ticket_number,
+				token
+			)
+			VALUES ($1, $2, $3)
+		`,
+			reservationID,
+			i,
+			ticketToken,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		tickets = append(tickets, ReservationTicketOutput{
+			Number: i,
+			Token:  ticketToken,
+		})
 	}
 
 	return tickets, nil

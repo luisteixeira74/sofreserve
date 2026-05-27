@@ -51,18 +51,11 @@
         {{ range .Data.Reservations }}
         <div class="terminal-line">
           <span class="prompt">&gt;</span>
-
           <span class="terminal-user">{{ .Name }}</span>
-
           <span class="terminal-separator">—</span>
-
           <span class="terminal-email">{{ .Email }}</span>
-
           <span class="terminal-separator">—</span>
-
-          <span class="terminal-slots">
-            {{ .Quantity }} vaga(s)
-          </span>
+          <span class="terminal-slots">{{ .Quantity }} access</span>
         </div>
         {{ end }}
 
@@ -89,10 +82,15 @@
           method="POST"
           action="/events/{{ .Data.PublicID }}/reservations?tab=checkin"
         >
+        <p class="muted">
+          Evento: <span class="terminal-user">{{ .Data.EventName }}</span>
+        </p>
+
           <input
             type="text"
             name="token"
-            placeholder="reservation token"
+            placeholder="> enter reservation token"
+            class="terminal-input"
             autofocus
           />
 
@@ -104,12 +102,16 @@
         {{ if .Data.CheckinMessage }}
           <div class="checkin-status success">
             ✔ ACCESS GRANTED
+            <br />
+            > check-in registered successfully
           </div>
         {{ end }}
 
         {{ if .Data.CheckinError }}
           <div class="checkin-status error">
             ✖ INVALID TOKEN
+            <br />
+            > token not found or already used
           </div>
         {{ end }}
       </div>

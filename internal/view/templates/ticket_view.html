@@ -19,32 +19,29 @@
     <p>
       <span class="prompt">&gt;</span>
       <span class="label">Token:</span>
-      <span class="value">{{ .Data.Token }}</span>
+      <span class="value"> {{ slice .Data.Token 0 8 }} </span>
     </p>
 
-    <br />
+    <p>
+      <span class="prompt">&gt;</span>
+      <span class="label">Status:</span>
 
-    <div class="ticket-terminal-box">
-      <pre class="ascii-ticket">
-+--------------------------------------+
-|         SOFRESERVE ACCESS            |
-+--------------------------------------+
-|                                      |
-|  EVENT: {{ .Data.EventName }}        
-|                                      |
-|  TICKET: #{{ .Data.TicketNumber }}                     
-|                                      |
-|  TOKEN: {{ .Data.Token }}            
-|                                      |
-+--------------------------------------+
-      </pre>
-    </div>
+      {{ if .Data.IsCheckedIn }}
+
+      <span class="success">CHECKED-IN</span>
+
+      {{ else }}
+
+      <span class="value">VALID</span>
+
+      {{ end }}
+    </p>
 
     <br />
 
     <div class="qr-wrapper">
       <img
-        src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={{ .Data.QRCodeURL }}"
+        src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={{ .Data.CheckinURL }}"
         alt="QR Code"
         class="qr-code"
       />
@@ -56,14 +53,14 @@
 
     <p class="success">
       <span class="prompt">&gt;</span>
-      Check-in realizado
+      CHECKED-IN realizado
     </p>
 
     {{ else }}
 
     <p class="muted">
       <span class="prompt">&gt;</span>
-      Ticket válido para entrada
+      READY TO ENTER / PRONTO PARA ENTRAR
     </p>
 
     {{ end }}
@@ -73,13 +70,33 @@
     <div class="terminal-note">
       <p class="muted">
         <span class="prompt">&gt;</span>
-        Apresente este QR-Code na entrada do evento.
+        Este QR-Code será utilizado pela organização para validar sua entrada no
+        evento.
       </p>
 
       <p class="muted">
         <span class="prompt">&gt;</span>
-        Cada participante possui um ticket individual.
+        Ticket individual.
       </p>
+    </div>
+
+    <br />
+
+    <p class="muted center">
+      Powered by
+      <a href="/" class="terminal-link"> SOFRESERVE </a>
+    </p>
+
+    <div class="hero-flow">
+      <span class="arrow">&gt;&gt;</span>
+
+      <div class="step">Crie seu evento</div>
+      <span class="sep">&gt;&gt;</span>
+
+      <div class="step">Gerencie reservas</div>
+      <span class="sep">&gt;&gt;</span>
+
+      <div class="step">Controle check-in</div>
     </div>
   </div>
 </div>

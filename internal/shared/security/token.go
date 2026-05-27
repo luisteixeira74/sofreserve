@@ -3,6 +3,8 @@ package security
 import (
 	"crypto/rand"
 	"encoding/hex"
+
+	"github.com/google/uuid"
 )
 
 func GenerateToken() (string, error) {
@@ -17,4 +19,8 @@ func GenerateToken() (string, error) {
 
 func BuildConfirmLink(baseURL, token string) string {
 	return baseURL + "/confirm?token=" + token
+}
+
+func GenerateTicketToken() string {
+	return uuid.NewString()
 }

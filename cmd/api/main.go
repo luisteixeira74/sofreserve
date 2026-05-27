@@ -58,6 +58,8 @@ func main() {
 		eventRepo,
 	)
 
+	ticketRepo := postgres.NewTicketRepository(database)
+
 	// =====================
 	// ROUTER
 	// =====================
@@ -67,6 +69,7 @@ func main() {
 		eventViewUC,
 		eventRepo,
 		reservationRepo,
+		ticketRepo,
 		createEventUC,
 		getOrganizerStatsUC,
 		database,

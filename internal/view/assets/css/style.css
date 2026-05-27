@@ -62,10 +62,16 @@ body.app {
 }
 
 .footer {
-  margin-top: 40px;
-  padding: 16px 32px; /* 👈 aqui */
-  border-top: 1px solid var(--border-default);
-  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-left,
+.footer-right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
 
 .nav a {
@@ -385,7 +391,50 @@ input:-webkit-autofill {
 }
 
 .step {
-  transition: opacity 0.3s;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+
+.step.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+
+  opacity: 0.85;
+}
+
+/* texto base apagado */
+.hero-flow .step {
+  color: var(--text-muted);
+  transition:
+    opacity 0.6s,
+    color 0.6s;
+  opacity: 0.35;
+}
+
+/* ativo */
+.hero-flow .step.active {
+  color: #73dca1; /* verde mais suave */
+  opacity: 1;
+}
+
+/* setas */
+.hero-flow .arrow,
+.hero-flow .sep {
+  color: var(--text-muted);
+  opacity: 0.25;
 }
 
 .hidden {

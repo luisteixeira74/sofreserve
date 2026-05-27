@@ -31,7 +31,7 @@ func (u *CheckinTicket) Execute(token string) error {
 		return ErrTicketAlreadyCheckedIn
 	}
 
-	err = u.TicketRepo.CheckIn(tx, ticket.ID)
+	err = u.TicketRepo.CheckIn(tx, ticket.Token)
 	if err != nil {
 		return err
 	}

@@ -9,18 +9,17 @@
   </head>
 
   <body class="app">
-    <!-- HEADER -->
     <header class="header">
       <div class="logo">
         <span class="primary"> SOF</span>/<span class="secondary">RESERVE</span>
       </div>
+
       <nav class="nav nav-terminal">
         <a href="/onboarding">Início</a>
         <a href="/events/new">Criar evento</a>
       </nav>
     </header>
 
-    <!-- MAIN -->
     <main class="container">
       {{if eq .Page "onboarding"}} {{template "onboarding" .}} {{else if eq
       .Page "event_create"}} {{template "event_create" .}} {{else if eq .Page
@@ -29,31 +28,26 @@
       "reservation_confirmed"}} {{template "reservation_confirmed" .}} {{else if
       eq .Page "reservation_cancel"}} {{template "reservation_cancel" .}} {{else
       if eq .Page "reservation_pending"}} {{template "reservation_pending" .}}
-      {{else if eq .Page "event_public"}} {{template "event_public" .}}{{else if
-      eq .Page "event_owner_dashboard"}} {{template "event_owner_dashboard"
-      .}}{{end}}
+      {{else if eq .Page "event_public"}} {{template "event_public" .}} {{else
+      if eq .Page "event_owner_dashboard"}} {{template "event_owner_dashboard"
+      .}} {{else if eq .Page "ticket_view"}} {{template "ticket_view" .}}{{end}}
     </main>
+
     <footer class="footer">
-      <div class="footer-line">
-        <span class="prompt">&gt;</span>
-
-        <span class="footer-label">
-          sofreserve running in experimental mode
-        </span>
-
+      <div class="footer-left">
+        <span class="footer-label"
+          >sofreserve running in experimental mode</span
+        >
         <span class="footer-separator">·</span>
-
-        <span class="footer-secondary"> built with Go </span>
+        <span class="footer-secondary">built with Go</span>
       </div>
 
-      <div class="footer-contact">
-        <span class="prompt">&gt;</span>
-
-        <span class="footer-label"> feedback/contact: </span>
-
-        <span class="footer-email"> luisteixeira.br@gmail.com </span>
+      <div class="footer-right">
+        <span class="footer-label">feedback/contact:</span>
+        <span class="footer-email">luisteixeira.br@gmail.com</span>
       </div>
     </footer>
+
     <script src="/assets/js/form.js"></script>
   </body>
 </html>

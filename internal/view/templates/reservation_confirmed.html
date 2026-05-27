@@ -8,11 +8,13 @@
       <span class="label">Evento:</span>
       <span class="value">{{.Data.EventName}}</span>
     </p>
+
     <p>
       <span class="prompt">&gt;</span>
       <span class="label">E-mail:</span>
       <span class="value">{{.Data.Email}}</span>
     </p>
+
     <p>
       <span class="prompt">&gt;</span>
       <span class="label">Quantidade:</span>
@@ -21,39 +23,48 @@
 
     <p>
       <span class="prompt">&gt;</span>
-      <span class="label">Quantidade:</span>
-      Tickets para check-in individual no evento
+      <span class="muted">Tickets individuais gerados com sucesso.</span>
     </p>
-
-    <br />
 
     <br />
 
     {{ range .Data.Tickets }}
 
     <div class="ticket-terminal-block">
+      <div class="terminal-divider">
+        ----------------------------------------------------
+      </div>
+
       <p class="muted">
-        <span class="prompt">&gt;</span>
-        Ticket #{{ .Number }}
+        <span class="label">Ticket</span>
+        <span class="value">#{{ .Number }}</span>
       </p>
 
       <p>
         <span class="label">TOKEN:</span>
-        <span class="value">{{ .Token }}</span>
+        <span class="value">{{ slice .Token 0 8 }}</span>
       </p>
 
-      <a
-        href="https://wa.me/?text={{ .WhatsAppMessage }}"
-        target="_blank"
-        class="terminal-link"
-      >
-        &gt; compartilhar via whatsapp
+      <p class="muted">Ação:</p>
+
+      <a href="{{ .WhatsAppLink }}" target="_blank" class="terminal-link">
+        [ compartilhar via whatsapp ]
       </a>
+
+      <div class="terminal-divider">
+        ----------------------------------------------------
+      </div>
     </div>
 
     <br />
 
     {{ end }}
+
+    <p class="muted">
+      <span class="prompt">&gt;</span>
+      IMPORTANTE: Cada participante possui um ticket individual. O check-in é
+      realizado separadamente na entrada.
+    </p>
 
     <br />
 
@@ -72,5 +83,4 @@
     </div>
   </div>
 </div>
-
 {{ end }}
