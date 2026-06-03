@@ -71,7 +71,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const inputs = document.querySelectorAll(".dynamic-link");
 
   inputs.forEach((input) => {
-    const text = input.dataset.link;
+    input.dataset.ready = "false";
+    input.disabled = true;
+
+    const text = input.dataset.link || "";
+
+    if (!text) {
+      input.dataset.ready = "true";
+      input.disabled = false;
+      return;
+    }
+
     input.value = "";
 
     let i = 0;
@@ -83,6 +93,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (i >= text.length) {
           clearInterval(interval);
+
+          input.dataset.ready = "true";
+          input.disabled = false;
+
           input.classList.remove("typing");
 
           input.onclick = () => input.select();
@@ -126,11 +140,19 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// =====================
+// COPY LINK
+// =====================
+
 document.addEventListener("DOMContentLoaded", () => {
   const inputs = document.querySelectorAll(".copy-input");
 
   inputs.forEach((input) => {
     input.addEventListener("click", async () => {
+      if (input.dataset.ready !== "true") {
+        return;
+      }
+
       try {
         await navigator.clipboard.writeText(input.value);
 
@@ -144,7 +166,6 @@ document.addEventListener("DOMContentLoaded", () => {
           }, 1200);
         }
       } catch (err) {
-        // fallback (caso clipboard API falhe)
         input.select();
         document.execCommand("copy");
       }

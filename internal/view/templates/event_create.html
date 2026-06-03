@@ -13,6 +13,7 @@
       <div class="field">
         <label class="label" for="event-name">&gt; Nome do evento:</label>
         <input
+          required
           class="value input-large"
           type="text"
           name="name"
@@ -27,6 +28,7 @@
           >&gt; Email do organizador:</label
         >
         <input
+          required
           class="value input-medium"
           type="email"
           name="organizer_email"
@@ -42,6 +44,7 @@
         <div class="number-input">
           <!-- input primeiro -->
           <input
+            required
             id="seats"
             type="number"
             name="total_seats"
@@ -119,6 +122,7 @@
           >&gt; Data do evento (não aceita reservas nesta data):</label
         >
         <input
+          required
           class="value input-small"
           id="event-date"
           type="date"

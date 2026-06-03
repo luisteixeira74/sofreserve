@@ -71,80 +71,132 @@
 
     {{ if eq .Data.ActiveTab "checkin" }}
 
-      <div class="checkin-container">
+<div class="checkin-container">
 
-      <div class="terminal-card">
-        <div class="terminal-header">
-          CHECK-IN
-        </div>
+  <div class="terminal-card">
 
-        <form
-          method="POST"
-          action="/events/{{ .Data.PublicID }}/reservations?tab=checkin"
+    <div class="terminal-header">
+      Check-in de participantes
+    </div>
+
+    <div class="terminal-body">
+
+      <p class="muted">
+        <span class="prompt">&gt;</span>
+        Evento:
+        <span class="terminal-user">
+          {{ .Data.EventName }}
+        </span>
+      </p>
+
+      <br />
+
+      <form
+        method="POST"
+        action="/events/{{ .Data.PublicID }}/reservations?tab=checkin"
+      >
+
+      <p class="muted">
+        <span class="prompt">&gt;</span>
+        Informe o token individual do participante
+      </p>
+
+        <input
+          required
+          type="text"
+          name="token"
+          placeholder="Token do ticket"
+          class="terminal-input"
+          autofocus
+        />
+
+        <br /><br />
+
+        <button
+          type="submit"
+          class="btn-terminal"
+          data-loading="true"
         >
+          CONFIRMAR ENTRADA
+        </button>
+
+      </form>
+
+      {{ if .Data.CheckinMessage }}
+
+      <div class="checkin-status success">
+
+        <strong>✓ Entrada liberada</strong>
+
+        <br />
+
+        Check-in realizado com sucesso.
+
+      </div>
+
+      {{ end }}
+
+      {{ if .Data.CheckinError }}
+
+      <div class="checkin-status error">
+
+        <strong>✖ Não foi possível realizar o check-in</strong>
+
+        <br />
+
+        {{ .Data.CheckinError }}
+
+      </div>
+
+      {{ end }}
+
+    </div>
+  </div>
+
+  <div class="terminal-card">
+
+    <div class="terminal-header">
+      Últimos check-ins
+    </div>
+
+    <div class="terminal-body">
+
+      {{ if .Data.LastCheckins }}
+
+        {{ range .Data.LastCheckins }}
+
+        <div class="checkin-item">
+
+  <span class="terminal-user">
+    {{ .GuestName }}
+  </span>
+
+  <span class="terminal-separator">—</span>
+
+  <span class="muted">
+    check-in realizado
+  </span>
+
+</div>
+
+        {{ end }}
+
+      {{ else }}
+
         <p class="muted">
-          Evento: <span class="terminal-user">{{ .Data.EventName }}</span>
+          Nenhum participante realizou check-in ainda.
         </p>
 
-          <input
-            type="text"
-            name="token"
-            placeholder="> enter reservation token"
-            class="terminal-input"
-            autofocus
-          />
+      {{ end }}
 
-          <button type="submit">
-            Confirmar entrada
-          </button>
-        </form>
-
-        {{ if .Data.CheckinMessage }}
-          <div class="checkin-status success">
-            ✔ ACCESS GRANTED
-            <br />
-            > check-in registered successfully
-          </div>
-        {{ end }}
-
-        {{ if .Data.CheckinError }}
-          <div class="checkin-status error">
-            ✖ INVALID TOKEN
-            <br />
-            > token not found or already used
-          </div>
-        {{ end }}
-      </div>
-
-      <div class="terminal-card">
-        <div class="terminal-header">
-          Últimos check-ins
-        </div>
-
-        {{ if .Data.LastCheckins }}
-
-          {{ range .Data.LastCheckins }}
-            <div class="checkin-item">
-              <span class="terminal-user">
-                {{ .GuestName }}
-              </span>
-
-              <span class="terminal-separator">—</span>
-
-              <span class="muted">
-                confirmado agora
-              </span>
-            </div>
-          {{ end }}
-        {{ else }}
-
-          <p class="muted">
-            Nenhum check-in realizado ainda.
-          </p>
-        {{ end }}
-      </div>
     </div>
-    {{ end }}
+
+  </div>
+
+</div>
+
+{{ end }}
+
   </div>
 </div>
 

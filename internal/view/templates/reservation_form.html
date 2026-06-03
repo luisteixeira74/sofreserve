@@ -6,11 +6,16 @@
   <div class="terminal-body">
     <div class="terminal-subheader">
       <span>Faça abaixo sua reserva para o evento</span>
-      <span class="value"> {{.Data.EventName}}</span>
+      <span class="value">{{.Data.EventName}}</span>
     </div>
 
+    <p class="muted">
+      <span class="prompt">&gt;</span>
+      Vagas disponíveis: {{.Data.Available}}
+    </p>
+
     {{if .Data.Error}}
-    <div class="error">{{.Data.Error}}</div>
+    <div class="error">> ERRO: {{.Data.Error}}</div>
     {{end}}
 
     <br />
@@ -24,9 +29,11 @@
         <span class="prompt">&gt;</span>
         <span class="label">Nome:</span>
         <input
+          required
           type="text"
           class="value input-medium"
           name="name"
+          maxlength="120"
           placeholder="Seu nome"
           value="{{.Data.Name}}"
         />
@@ -36,9 +43,11 @@
         <span class="prompt">&gt;</span>
         <span class="label">Email:</span>
         <input
+          required
           type="email"
           class="value input-medium"
           name="email"
+          maxlength="255"
           placeholder="seu@email.com"
           value="{{.Data.Email}}"
         />
@@ -48,6 +57,7 @@
         <span class="prompt">&gt;</span>
         <span class="label">Quantidade:</span>
         <input
+          required
           type="number"
           name="quantity"
           class="value input-small"

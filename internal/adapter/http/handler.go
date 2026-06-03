@@ -80,6 +80,8 @@ type ReservationCancelView struct {
 type EventCreateView struct {
 	Name           string
 	OrganizerEmail string
+	TotalSeats     int
+	EndsAt         string
 	Error          string
 }
 
@@ -226,12 +228,29 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 
 	totalSeats, err := strconv.Atoi(totalSeatsStr)
 
-	if name == "" ||
-		email == "" ||
-		!strings.Contains(email, "@") ||
-		err != nil ||
-		totalSeats <= 0 {
+	var errors []string
 
+	if name == "" {
+		errors = append(errors, "Nome é obrigatório")
+	}
+
+	if email == "" {
+		errors = append(errors, "Email é obrigatório")
+	}
+
+	if email != "" && !strings.Contains(email, "@") {
+		errors = append(errors, "Email inválido")
+	}
+
+	if err != nil {
+		errors = append(errors, "Total de vagas inválido")
+	}
+
+	if totalSeats <= 0 {
+		errors = append(errors, "Total de vagas deve ser maior que zero")
+	}
+
+	if len(errors) > 0 {
 		h.renderTemplate(w, "layout", RenderTemplateData{
 			Page:  "event_create",
 			Title: buildTitle("Criar evento", ""),
@@ -928,22 +947,59 @@ func (h *Handler) handleReservationError(w http.ResponseWriter, err error, data 
 	http.Error(w, "erro interno", http.StatusInternalServerError)
 }
 
-func (h *Handler) parseReservationInput(r *http.Request) (int, int, string, string, error) {
+func (h *Handler) parseReservationInput(
+	r *http.Request,
+) (int, int, string, string, error) {
+
 	eventID, err := strconv.Atoi(r.FormValue("event_id"))
 	if err != nil || eventID <= 0 {
 		return 0, 0, "", "", errors.New("evento inválido")
 	}
 
 	qty, err := strconv.Atoi(r.FormValue("quantity"))
-	if err != nil || qty <= 0 {
+	if err != nil {
 		return 0, 0, "", "", errors.New("quantidade inválida")
 	}
 
 	name := strings.TrimSpace(r.FormValue("name"))
 	email := strings.TrimSpace(r.FormValue("email"))
 
-	if name == "" || email == "" || !strings.Contains(email, "@") {
-		return 0, 0, "", "", errors.New("dados inválidos")
+	var validationErrors []string
+
+	if name == "" {
+		validationErrors = append(
+			validationErrors,
+			"Nome é obrigatório",
+		)
+	}
+
+	if email == "" {
+		validationErrors = append(
+			validationErrors,
+			"Email é obrigatório",
+		)
+	}
+
+	if email != "" && !strings.Contains(email, "@") {
+		validationErrors = append(
+			validationErrors,
+			"Email inválido",
+		)
+	}
+
+	if qty <= 0 {
+		validationErrors = append(
+			validationErrors,
+			"Quantidade deve ser maior que zero",
+		)
+	}
+
+	if len(validationErrors) > 0 {
+		return eventID,
+			qty,
+			name,
+			email,
+			errors.New(strings.Join(validationErrors, ", "))
 	}
 
 	return eventID, qty, name, email, nil
