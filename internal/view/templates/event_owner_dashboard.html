@@ -7,41 +7,41 @@
 
   <div class="terminal-body">
     <a href="javascript:history.back()" class="btn btn-preset">
-      ← Voltar
+      ← Painel de Eventos
     </a>
 
     <br /><br />
 
     <div class="dashboard-tabs">
       <a
-        href="/events/{{ .Data.PublicID }}/reservations?tab=reservations"
-        class="tab-link {{ if eq .Data.ActiveTab "reservations" }}tab-active{{ end }}"
+        href="/events/{{ .Data.Event.PublicID }}/reservations?tab=reservations"
+        class="tab-link {{ if eq .UI.ActiveTab "reservations" }}tab-active{{ end }}"
       >
-        Reservas
+        > reservations
       </a>
 
       <a
-        href="/events/{{ .Data.PublicID }}/reservations?tab=checkin"
-        class="tab-link {{ if eq .Data.ActiveTab "checkin" }}tab-active{{ end }}"
+        href="/events/{{ .Data.Event.PublicID }}/reservations?tab=checkin"
+        class="tab-link {{ if eq .UI.ActiveTab "checkin" }}tab-active{{ end }}"
       >
-        Check-in
+        > checkin
       </a>
     </div>
 
     <br />
 
-    {{ if eq .Data.ActiveTab "reservations" }}
+    {{ if eq .UI.ActiveTab "reservations" }}
 
       <p>
         <span class="prompt">&gt;</span>
         <span class="label">Evento:</span>
-        {{ .Data.EventName }}
+        {{ .Data.Event.Name }}
       </p>
 
       <p>
         <span class="prompt">&gt;</span>
         <span class="label">Total confirmado:</span>
-        {{ .Data.TotalConfirmed }} / {{ .Data.TotalSeats }}
+        {{ .Data.Event.Reserved }} / {{ .Data.Event.TotalSeats }}
       </p>
 
       <br />
@@ -69,14 +69,14 @@
 
     {{ end }}
 
-    {{ if eq .Data.ActiveTab "checkin" }}
+    {{ if eq .UI.ActiveTab "checkin" }}
 
 <div class="checkin-container">
 
   <div class="terminal-card">
 
     <div class="terminal-header">
-      Check-in de participantes
+      Validação de ticket
     </div>
 
     <div class="terminal-body">
@@ -85,7 +85,7 @@
         <span class="prompt">&gt;</span>
         Evento:
         <span class="terminal-user">
-          {{ .Data.EventName }}
+          {{ .Data.Event.Name }}
         </span>
       </p>
 
@@ -93,13 +93,13 @@
 
       <form
         method="POST"
-        action="/events/{{ .Data.PublicID }}/reservations?tab=checkin"
+        action="/events/{{ .Data.Event.PublicID }}/checkin"
       >
 
-      <p class="muted">
-        <span class="prompt">&gt;</span>
-        Informe o token individual do participante
-      </p>
+        <p class="muted">
+          <span class="prompt">&gt;</span>
+          Informe o token do ticket
+        </p>
 
         <input
           required
@@ -122,35 +122,36 @@
 
       </form>
 
-      {{ if .Data.CheckinMessage }}
+      {{ if .UI.CheckinMessage }}
+
+      <br />
 
       <div class="checkin-status success">
 
-        <strong>✓ Entrada liberada</strong>
-
-        <br />
-
-        Check-in realizado com sucesso.
+        <strong>
+          ✓ {{ .UI.CheckinMessage }}
+        </strong>
 
       </div>
 
       {{ end }}
 
-      {{ if .Data.CheckinError }}
+      {{ if .UI.CheckinError }}
+
+      <br />
 
       <div class="checkin-status error">
 
-        <strong>✖ Não foi possível realizar o check-in</strong>
-
-        <br />
-
-        {{ .Data.CheckinError }}
+        <strong>
+          ✖ {{ .UI.CheckinError }}
+        </strong>
 
       </div>
 
       {{ end }}
 
     </div>
+
   </div>
 
   <div class="terminal-card">
@@ -161,23 +162,23 @@
 
     <div class="terminal-body">
 
-      {{ if .Data.LastCheckins }}
+      {{ if .LastCheckins }}
 
-        {{ range .Data.LastCheckins }}
+        {{ range .LastCheckins }}
 
         <div class="checkin-item">
 
-  <span class="terminal-user">
-    {{ .GuestName }}
-  </span>
+          <span class="terminal-user">
+            {{ .GuestName }}
+          </span>
 
-  <span class="terminal-separator">—</span>
+          <span class="terminal-separator">—</span>
 
-  <span class="muted">
-    check-in realizado
-  </span>
+          <span class="muted">
+            {{ .CheckedInAt }}
+          </span>
 
-</div>
+        </div>
 
         {{ end }}
 

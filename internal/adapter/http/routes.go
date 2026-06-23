@@ -10,19 +10,20 @@ import (
 )
 
 func NewRouter(
-		createReservationUC *usecase.CreateReservationUseCase,
-		confirmUC *usecase.ConfirmReservationUseCase,
-		eventViewUC *usecase.GetEventViewUseCase,
-		
-		eventRepo port.EventRepository,
-		reservationRepo port.ReservationRepository,
-		ticketRepo port.TicketRepository,
+    createReservationUC *usecase.CreateReservationUseCase,
+    confirmUC *usecase.ConfirmReservationUseCase,
+    eventViewUC *usecase.GetEventViewUseCase,
 
-		createEventUC *usecase.CreateEventUseCase,
-		getOrganizerStats *usecase.GetOrganizerStats,
-		
-		db *sql.DB,
-	) http.Handler {
+    eventRepo port.EventRepository,
+    reservationRepo port.ReservationRepository,
+    ticketRepo port.TicketRepository,
+
+    createEventUC *usecase.CreateEventUseCase,
+    getOrganizerStatsUC *usecase.GetOrganizerStatsUseCase,
+    checkinTicketUC *usecase.CheckinTicket,
+
+    db *sql.DB,
+) http.Handler {
 
 	handler := &Handler{
 		reserveUC:       createReservationUC,
@@ -34,7 +35,8 @@ func NewRouter(
 		ticketRepo:      ticketRepo,
 
 		createEventUC:   createEventUC,
-		organizerStats:  getOrganizerStats,
+		organizerStatsUC:  getOrganizerStatsUC,
+		checkinTicketUC: checkinTicketUC,
 
 		db:              db,
 	}
@@ -52,21 +54,44 @@ func NewRouter(
 
 	// owner event list
 	mux.HandleFunc("/manage/", handler.OwnerDashboard)
-	// owner actions
-	mux.HandleFunc("/manage/checkin", handler.OwnerCheckin) // Post
 
 	// dashboard do evento
 	mux.HandleFunc("/events/", func(w http.ResponseWriter, r *http.Request) {
 
-		parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+			parts := strings.Split(
+			strings.Trim(r.URL.Path, "/"),
+			"/",
+		)
 
-		if len(parts) == 3 && parts[2] == "reservations" {
-			handler.EventReservationsPage(w, r, parts[1])
+		if len(parts) == 3 &&
+			parts[2] == "reservations" {
+
+			handler.EventReservationsPage(
+				w,
+				r,
+				parts[1],
+			)
+
 			return
 		}
 
-		handler.EventPageByPublicID(w, r)
+		if len(parts) == 3 &&
+			parts[2] == "checkin" {
+
+			handler.OwnerCheckin(
+				w,
+				r,
+			)
+
+			return
+		}
+
+		handler.EventPageByPublicID(
+			w,
+			r,
+		)
 	})
+
 	// link publico do evento
 	mux.HandleFunc("/e/", handler.EventPublicPage)
 	

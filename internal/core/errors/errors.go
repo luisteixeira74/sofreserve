@@ -61,6 +61,16 @@ var (
 		Code:    "INVALID_STATUS_TRANSITION",
 	}
 
+	ErrTicketNotFound = &AppError{
+		Message: "Ticket não encontrado",
+		Code:    "TICKET_NOT_FOUND",
+	}
+
+	ErrTicketAlreadyCheckedIn = &AppError{
+		Message: "Ticket já foi check-in",
+		Code:    "TICKET_ALREADY_CHECKED_IN",
+	}
+
 	StatusConfirmed = "CONFIRMADO"
 	StatusPending   = "PENDENTE"
 	StatusCanceled  = "CANCELADO"

@@ -2,12 +2,12 @@ package usecase
 
 import "sof-reserve/internal/core/port"
 
-type GetOrganizerStats struct {
+type GetOrganizerStatsUseCase struct {
     eventRepo port.EventRepository
 }
 
-func NewGetOrganizerStatsUseCase(repo port.EventRepository) *GetOrganizerStats {
-    return &GetOrganizerStats{
+func NewGetOrganizerStatsUseCase(repo port.EventRepository) *GetOrganizerStatsUseCase {
+    return &GetOrganizerStatsUseCase{
         eventRepo: repo,
     }
 }
@@ -16,7 +16,7 @@ type OrganizerStats struct {
     EventCount int
 }
 
-func (uc *GetOrganizerStats) Execute(email string) (OrganizerStats, error) {
+func (uc *GetOrganizerStatsUseCase) Execute(email string) (OrganizerStats, error) {
     count, err := uc.eventRepo.CountEventsByOrganizerEmail(email)
     if err != nil {
         return OrganizerStats{}, err

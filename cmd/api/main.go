@@ -27,6 +27,7 @@ func main() {
 	// =====================
 	eventRepo := postgres.NewEventRepository(database)
 	reservationRepo := postgres.NewReservationRepository(database)
+	ticketRepo := postgres.NewTicketRepository(database)
 
 	// =====================
 	// USECASES
@@ -37,6 +38,7 @@ func main() {
 		database,
 		eventRepo,
 		reservationRepo,
+		ticketRepo,
 		clock,
 	)
 
@@ -60,6 +62,11 @@ func main() {
 
 	ticketRepo := postgres.NewTicketRepository(database)
 
+	checkinTicketUC := usecase.NewCheckinTicket(
+		database,
+		ticketRepo,
+	)
+
 	// =====================
 	// ROUTER
 	// =====================
@@ -72,7 +79,9 @@ func main() {
 		ticketRepo,
 		createEventUC,
 		getOrganizerStatsUC,
+		checkinTicketUC,
 		database,
+
 	)
 
 	// =====================

@@ -16,7 +16,7 @@ type ReservationRepository interface {
 		qty int,
 		status string,
 		token string,
-	) error
+	) (int64, error)
 
 	ExistsByEventAndEmail(
 		tx *sql.Tx,

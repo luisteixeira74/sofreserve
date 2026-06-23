@@ -28,7 +28,7 @@ type TicketRepository interface {
 
 	CheckIn(
 		tx *sql.Tx,
-		token string,
+		ticketID int64,
 	) error
 
 	FindTicketViewByToken(

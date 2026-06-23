@@ -21,7 +21,8 @@ CREATE TABLE reservation_tickets (
 );
 
 CREATE INDEX idx_reservation_tickets_reservation_id
-    ON reservation_tickets(reservation_id);
+    ON reservation_tickets (reservation_id);
 
-CREATE INDEX idx_reservation_tickets_token
-    ON reservation_tickets(token);
+CREATE INDEX idx_reservation_tickets_checked_in_at
+    ON reservation_tickets (checked_in_at DESC);
+

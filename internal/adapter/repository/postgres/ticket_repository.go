@@ -143,16 +143,16 @@ func (r *TicketRepository) FindByTokenForUpdate(
 
 func (r *TicketRepository) CheckIn(
 	tx *sql.Tx,
-	token string,
+	ticketID int64,
 ) error {
 
 	_, err := tx.Exec(`
 		UPDATE reservation_tickets
 		SET checked_in_at = NOW()
-		WHERE token = $1
+		WHERE id = $1
 		AND checked_in_at IS NULL
 	`,
-		token,
+		ticketID,
 	)
 
 	return err

@@ -15,8 +15,8 @@
       </div>
 
       <nav class="nav nav-terminal">
-        <a href="/onboarding">Início</a>
-        <a href="/events/new">Criar evento</a>
+        <a href="/onboarding">&gt; início</a>
+        <a href="/events/new">&gt; criar evento</a>
       </nav>
     </header>
 
@@ -30,14 +30,13 @@
       if eq .Page "reservation_pending"}} {{template "reservation_pending" .}}
       {{else if eq .Page "event_public"}} {{template "event_public" .}} {{else
       if eq .Page "event_owner_dashboard"}} {{template "event_owner_dashboard"
-      .}} {{else if eq .Page "ticket_view"}} {{template "ticket_view" .}}{{end}}
+      .Data}} {{else if eq .Page "ticket_view"}} {{template "ticket_view"
+      .}}{{end}}
     </main>
 
     <footer class="footer">
       <div class="footer-left">
-        <span class="footer-label"
-          >sofreserve running in experimental mode</span
-        >
+        <span class="footer-label">sofreserve</span>
         <span class="footer-separator">·</span>
         <span class="footer-secondary">built with Go</span>
       </div>

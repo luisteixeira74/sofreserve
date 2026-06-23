@@ -35,16 +35,24 @@ func (r *ReservationRepository) Create(
 	qty int,
 	status string,
 	token string,
-) error {
+) (int64, error) {
 
-	_, err := tx.Exec(
-		`INSERT INTO reservations
+	var id int64
+
+	err := tx.QueryRow(`
+		INSERT INTO reservations
 		(event_id, name, email, quantity, status, token)
-		VALUES ($1, $2, $3, $4, $5, $6)`,
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id
+	`,
 		eventID, name, email, qty, status, token,
-	)
+	).Scan(&id)
 
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
 func (r *ReservationRepository) ExistsByEventAndEmail(
@@ -100,7 +108,7 @@ func (r *ReservationRepository) UpdateStatus(
 ) error {
 
 	query := `
-		UPDATE reservations
+		UPDATE 	reservations
 		SET
 			status = $1,
 			confirmed_at = CASE

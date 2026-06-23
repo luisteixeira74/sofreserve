@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +30,10 @@ var tmpl = template.Must(
 // VIEW MODELS
 // =====================
 
+// =====================
+// EVENT (DOMÍNIO / VIEW BASE)
+// =====================
+
 type EventView struct {
 	ID            int
 	Name          string
@@ -41,11 +46,65 @@ type EventView struct {
 	IsClosed      bool
 	PublicID      string
 	LastUpdated   string
-	PublicLink string
-	OtherEvents string
+	PublicLink    string
+
 	OrganizerEventCount int
-	OrganizerEmail string
+	OrganizerEmail      string
+
+	WhatsAppShareText string
 }
+
+// =====================
+// EVENT DASHBOARD (PRESENTATION DATA)
+// =====================
+
+type EventDashboardData struct {
+	Event EventView
+
+	PublicLink  string
+	LastUpdated string
+
+	Reservations []entity.Reservation
+
+	WhatsAppShareText string
+}
+
+// =====================
+// UI STATE (INTERAÇÃO / FEEDBACK)
+// =====================
+
+type EventDashboardUIState struct {
+	ActiveTab string
+
+	CheckinMessage string
+	CheckinError   string
+}
+
+// =====================
+// VIEW FINAL (COMPOSIÇÃO)
+// =====================
+
+type EventOwnerDashboardView struct {
+	Title string
+
+	Data EventDashboardData
+
+	UI EventDashboardUIState
+
+	LastCheckins []LastCheckin
+}
+
+// =====================
+// LAST CHECKIN
+// =====================
+
+type LastCheckin struct {
+	GuestName string
+}
+
+// =====================
+// RESERVATION PAGE
+// =====================
 
 type ReservationPageData struct {
 	Error       string
@@ -59,11 +118,19 @@ type ReservationPageData struct {
 	Available   int
 }
 
+// =====================
+// TEMPLATE WRAPPER
+// =====================
+
 type RenderTemplateData struct {
 	Page  string
 	Title string
 	Data  any
 }
+
+// =====================
+// RESERVATION VIEWS
+// =====================
 
 type ReservationErrorView struct {
 	Message string
@@ -71,11 +138,33 @@ type ReservationErrorView struct {
 }
 
 type ReservationCancelView struct {
-	Message   string
-	EventID   int
-	EventName string
+	Message    string
+	EventID    int
+	EventName  string
 	PublicLink string
 }
+
+type ReservationTicketView struct {
+	Token        string
+	QRCodeURL    string
+	Number       int
+	WhatsAppLink string
+}
+
+type ReservationConfirmedView struct {
+	EventName  string
+	Name       string
+	Email      string
+	Quantity   int
+	Message    string
+	Status     string
+	CancelLink string
+	Tickets    []ReservationTicketView
+}
+
+// =====================
+// EVENT CREATE VIEW
+// =====================
 
 type EventCreateView struct {
 	Name           string
@@ -85,48 +174,9 @@ type EventCreateView struct {
 	Error          string
 }
 
-type OwnerDashboardView struct {
-	EventName     string
-	TotalSeats    int
-	TotalConfirmed int
-	Reservations  []entity.Reservation
-}
-
-type EventOwnerDashboardView struct {
-	EventName      string
-	PublicID       string
-	TotalSeats     int
-	TotalConfirmed int
-	Reservations   []entity.Reservation
-	ActiveTab      string
-
-	// CHECK-IN
-	CheckinMessage string
-	CheckinError   string
-	LastCheckins   []LastCheckin
-}
-
-type LastCheckin struct {
-	GuestName string
-}
-
-type ReservationTicketView struct {
-	Token     string
-	QRCodeURL string
-	Number    int
-	WhatsAppLink string
-}
-
-type ReservationConfirmedView struct {
-	EventName string
-	Name      string
-	Email     string
-	Quantity  int
-	Message   string
-	Status    string
-	CancelLink string
-	Tickets []ReservationTicketView
-}
+// =====================
+// TICKET VIEW
+// =====================
 
 type TicketViewData struct {
 	EventName    string
@@ -137,8 +187,8 @@ type TicketViewData struct {
 	CheckinURL   string
 	WhatsAppLink string
 
-	IsCheckedIn  bool
-	CheckedInAt  *time.Time
+	IsCheckedIn bool
+	CheckedInAt *time.Time
 }
 
 // =====================
@@ -146,16 +196,19 @@ type TicketViewData struct {
 // =====================
 
 type Handler struct {
-	reserveUC   *usecase.CreateReservationUseCase
-	confirmUC   *usecase.ConfirmReservationUseCase
-	eventViewUC *usecase.GetEventViewUseCase
-	createEventUC *usecase.CreateEventUseCase
-	eventRepo port.EventRepository
+	reserveUC       *usecase.CreateReservationUseCase
+	confirmUC       *usecase.ConfirmReservationUseCase
+	eventViewUC     *usecase.GetEventViewUseCase
+	createEventUC   *usecase.CreateEventUseCase
+
+	eventRepo       port.EventRepository
 	reservationRepo port.ReservationRepository
-	organizerStats *usecase.GetOrganizerStats
+	organizerStatsUC  *usecase.GetOrganizerStatsUseCase
+
 	db *sql.DB
-	checkinTicket *usecase.CheckinTicket
-	ticketRepo port.TicketRepository
+
+	checkinTicketUC *usecase.CheckinTicket
+	ticketRepo    port.TicketRepository
 }
 
 // =====================
@@ -357,7 +410,7 @@ func (h *Handler) EventPageByPublicID(w http.ResponseWriter, r *http.Request) {
 		percentage = (ucView.Reserved * 100) / ucView.TotalSeats
 	}
 
-	stats, err := h.organizerStats.Execute(ucView.OrganizerEmail)
+	stats, err := h.organizerStatsUC.Execute(ucView.OrganizerEmail)
 	if err != nil {
 		stats.EventCount = 0
 	}
@@ -377,6 +430,10 @@ func (h *Handler) EventPageByPublicID(w http.ResponseWriter, r *http.Request) {
 		OrganizerEmail: ucView.OrganizerEmail,
 		OrganizerEventCount: stats.EventCount,
 		LastUpdated:   time.Now().Format("15:04:05"),
+		WhatsAppShareText: url.QueryEscape(
+			"Acesse o evento: " + baseURL + "/e/" + ucView.PublicID,
+		),
+
 	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
@@ -408,13 +465,26 @@ func (h *Handler) EventReservationsPage(
 		return
 	}
 
+	baseURL := "http://localhost:8080"
+
+	eventViewMapped := mapEventView(event)
+
 	data := EventOwnerDashboardView{
-		EventName:      event.Name,
-		PublicID:       event.PublicID,
-		TotalSeats:     event.TotalSeats,
-		TotalConfirmed: event.Reserved,
-		Reservations:   reservations,
-		ActiveTab:      tab,
+		Title: "Event Dashboard",
+
+		Data: EventDashboardData{
+			Event: eventViewMapped,
+
+			PublicLink: fmt.Sprintf("%s/e/%s", baseURL, event.PublicID),
+
+			LastUpdated: time.Now().Format("15:04:05"),
+
+			Reservations: reservations,
+		},
+
+		UI: EventDashboardUIState{
+			ActiveTab: tab,
+		},
 	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
@@ -422,6 +492,24 @@ func (h *Handler) EventReservationsPage(
 		Title: buildTitle("Reservas", event.Name),
 		Data:  data,
 	})
+}
+
+func mapEventView(uc usecase.EventView) EventView {
+	return EventView{
+		ID:         uc.ID,
+		Name:       uc.Name,
+		TotalSeats: uc.TotalSeats,
+		Reserved:   uc.Reserved,
+
+		Available:  uc.Available,
+		Percentage: uc.Percentage,
+
+		RemainingText: uc.RemainingText,
+		ShowAlert:     uc.ShowAlert,
+		IsClosed:      uc.IsClosed,
+
+		PublicID:    uc.PublicID,
+	}
 }
 
 // =====================
@@ -451,6 +539,13 @@ func (h *Handler) EventPublicPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
+	stats, err := h.organizerStatsUC.Execute(ucView.OrganizerEmail)
+	if err != nil {
+		http.Error(w, "error loading stats", 500)
+		return
+	}
+
 	baseURL := getBaseURL(r)
 
 	view := EventView{
@@ -466,7 +561,8 @@ func (h *Handler) EventPublicPage(w http.ResponseWriter, r *http.Request) {
 		PublicID:      ucView.PublicID,
 		PublicLink:    baseURL + "/e/" + ucView.PublicID,
 		LastUpdated:   time.Now().Format("15:04:05"),
-		OtherEvents: "Em breve: outros eventos do organizador", // Placeholder, pode ser implementado futuramente
+
+		OrganizerEventCount: stats.EventCount,
 	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
@@ -783,9 +879,16 @@ func (h *Handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) OwnerDashboard(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) OwnerDashboard(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 
-	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	parts := strings.Split(
+		strings.Trim(r.URL.Path, "/"),
+		"/",
+	)
+
 	if len(parts) < 2 {
 		http.NotFound(w, r)
 		return
@@ -798,48 +901,15 @@ func (h *Handler) OwnerDashboard(w http.ResponseWriter, r *http.Request) {
 		tab = "reservations"
 	}
 
-	// =====================
-	// EVENTO
-	// =====================
-	eventView, err := h.eventViewUC.ExecuteByPublicID(publicID)
+	view, err := h.loadOwnerDashboard(publicID, tab)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	// =====================
-	// RESERVAS CONFIRMADAS
-	// =====================
-	reservations, err := h.reservationRepo.FindConfirmedByEventID(eventView.ID)
-	if err != nil {
-		http.Error(w, "failed to load reservations", http.StatusInternalServerError)
-		return
-	}
-
-	// =====================
-	// TOTAL CONFIRMADO (CORRETO)
-	// =====================
-	totalConfirmed, err := h.reservationRepo.SumByEventID(eventView.ID)
-	if err != nil {
-		http.Error(w, "failed to calculate totals", http.StatusInternalServerError)
-		return
-	}
-
-	// =====================
-	// VIEW
-	// =====================
-	view := EventOwnerDashboardView{
-		EventName:      eventView.Name,
-		PublicID:       publicID,
-		TotalSeats:     eventView.TotalSeats,
-		TotalConfirmed: totalConfirmed,
-		Reservations:   reservations,
-		ActiveTab:      tab,
-	}
-
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page:  "event_owner_dashboard",
-		Title: buildTitle("Reservas", eventView.Name),
+		Title: buildTitle("Reservas", view.Data.Event.Name),
 		Data:  view,
 	})
 }
@@ -895,35 +965,88 @@ func (h *Handler) OwnerCheckin(
 ) {
 
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		http.Error(
+			w,
+			"method not allowed",
+			http.StatusMethodNotAllowed,
+		)
 		return
 	}
 
-	token := r.URL.Query().Get("token")
+	parts := strings.Split(
+		strings.Trim(r.URL.Path, "/"),
+		"/",
+	)
 
-	err := h.checkinTicket.Execute(token)
+	if len(parts) < 3 {
+		http.NotFound(w, r)
+		return
+	}
 
-	if err != nil {
+	publicID := parts[1]
 
-		if errors.Is(err, usecase.ErrTicketAlreadyCheckedIn) {
+	token := strings.TrimSpace(
+		r.FormValue("token"),
+	)
 
-			h.renderTemplate(w, "layout", RenderTemplateData{
-				Page:  "checkin_already_used",
-				Title: buildTitle("Confirmação de Check-in", ""),
-				Data:  token,
+	log.Println("TOKEN RECEBIDO:", token)
+
+	if token == "" {
+		http.Error(
+			w,
+			"token is required",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	log.Println("Executando checkin para:", token)
+
+	err := h.checkinTicketUC.Execute(token)
+
+	log.Printf("Resultado Execute(): %v\n", err)
+
+	view, loadErr := h.loadOwnerDashboard(
+		publicID,
+		"checkin",
+	)
+
+	if loadErr != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	view.UI.CheckinError = ""
+	view.UI.CheckinMessage = ""
+
+		switch err {
+
+		case nil:
+			view.UI.CheckinMessage = "Check-in realizado com sucesso"
+
+			view.LastCheckins = append(view.LastCheckins, LastCheckin{
+				GuestName: token,
 			})
 
+		case coreErr.ErrTicketNotFound:
+			view.UI.CheckinError = "Ticket não encontrado"
+
+		case coreErr.ErrTicketAlreadyCheckedIn:
+			view.UI.CheckinError = "Ticket já utilizado"
+
+		default:
+			http.Error(
+				w,
+				"internal server error",
+				http.StatusInternalServerError,
+			)
 			return
 		}
 
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
 	h.renderTemplate(w, "layout", RenderTemplateData{
-		Page:  "checkin_success",
-		Title: buildTitle("Confirmação de Check-in", ""),
-		Data:  token,
+		Page:  "event_owner_dashboard",
+		Title: buildTitle("Check-in", view.Data.Event.Name),
+		Data:  view,
 	})
 }
 
@@ -1005,19 +1128,85 @@ func (h *Handler) parseReservationInput(
 	return eventID, qty, name, email, nil
 }
 
+func (h *Handler) loadOwnerDashboard(
+	publicID string,
+	tab string,
+) (EventOwnerDashboardView, error) {
+
+	event, err := h.eventViewUC.ExecuteByPublicID(publicID)
+	if err != nil {
+		return EventOwnerDashboardView{}, err
+	}
+
+	reservations, err := h.reservationRepo.FindConfirmedByEventID(event.ID)
+	if err != nil {
+		return EventOwnerDashboardView{}, err
+	}
+
+	totalConfirmed, err := h.reservationRepo.SumByEventID(event.ID)
+	if err != nil {
+		return EventOwnerDashboardView{}, err
+	}
+
+	return h.buildOwnerDashboard(
+		event,
+		reservations,
+		totalConfirmed,
+		tab,
+	), nil
+}
+
 func (h *Handler) buildOwnerDashboard(
-	event entity.Event,
+	event usecase.EventView,
 	reservations []entity.Reservation,
 	totalConfirmed int,
 	tab string,
 ) EventOwnerDashboardView {
 
+	available := event.TotalSeats - totalConfirmed
+
+	percentage := 0
+	if event.TotalSeats > 0 {
+		percentage = (totalConfirmed * 100) / event.TotalSeats
+	}
+
+	remainingText := ""
+	if available > 0 {
+		remainingText = fmt.Sprintf("Restam %d vagas", available)
+	} else {
+		remainingText = "Sem vagas disponíveis"
+	}
+
+	publicLink := fmt.Sprintf("http://localhost:8080/e/%s", event.PublicID)
+
 	return EventOwnerDashboardView{
-		EventName:      event.Name,
-		PublicID:       event.PublicID,
-		TotalSeats:     event.TotalSeats,
-		TotalConfirmed: totalConfirmed,
-		Reservations:   reservations,
-		ActiveTab:      tab,
+		Title: "Event Dashboard",
+
+		Data: EventDashboardData{
+			Event: EventView{
+				ID:            event.ID,
+				Name:          event.Name,
+				TotalSeats:    event.TotalSeats,
+				Reserved:      totalConfirmed,
+				Available:     available,
+				Percentage:    percentage,
+				RemainingText: remainingText,
+				IsClosed:      event.IsClosed,
+				PublicID:      event.PublicID,
+				PublicLink:    publicLink,
+				LastUpdated:   time.Now().Format("15:04:05"),
+			},
+
+			Reservations: reservations,
+
+			WhatsAppShareText: url.QueryEscape(
+				"Acesse o evento: " + publicLink,
+			),
+
+		},
+
+		UI: EventDashboardUIState{
+			ActiveTab: tab,
+		},
 	}
 }
