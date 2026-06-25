@@ -6,4 +6,5 @@ type LastCheckin struct {
     TicketNumber int
     Token        string
     CheckedInAt  time.Time
+    CheckedInAtStr string
 }

@@ -6,8 +6,8 @@
   </div>
 
   <div class="terminal-body">
-    <a href="javascript:history.back()" class="btn btn-preset">
-      ← Painel de Eventos
+    <a href="/events/{{ .Data.Event.PublicID }}" class="btn btn-preset">
+      ← Painel do Evento
     </a>
 
     <br /><br />
@@ -174,8 +174,8 @@
 
           <span class="terminal-separator">[</span>
 
-          <span class="muted">
-            {{ .CheckedInAt }}
+          <span class="terminal-time">
+            {{ .CheckedInAtStr }}
           </span>
 
           <span class="terminal-separator">]</span>

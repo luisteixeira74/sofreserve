@@ -17,6 +17,7 @@ import (
 	coreErr "sof-reserve/internal/core/errors"
 	"sof-reserve/internal/core/port"
 	"sof-reserve/internal/core/usecase"
+	"sof-reserve/internal/shared/formatter"
 	"sof-reserve/internal/shared/id"
 	"sof-reserve/internal/shared/message"
 	"sof-reserve/internal/shared/security"
@@ -1038,6 +1039,12 @@ func (h *Handler) OwnerCheckin(
 			int64(view.Data.Event.ID),
 			5,
 		)
+
+		for i := range lastCheckin {
+			lastCheckin[i].CheckedInAtStr =
+				formatter.FormatDateTime(&lastCheckin[i].CheckedInAt)
+		}
+
 		view.LastCheckins = lastCheckin
 	}
 
