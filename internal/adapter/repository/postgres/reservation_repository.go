@@ -174,3 +174,20 @@ func (r *ReservationRepository) FindConfirmedByEventID(eventID int64) ([]entity.
 
 	return reservations, nil
 }
+
+func (r *ReservationRepository) CancelIfAllowed(
+	tx *sql.Tx,
+	token string,
+) (sql.Result, error) {
+
+	return tx.Exec(`
+		UPDATE reservations
+		SET status = $1
+		WHERE token = $2
+		AND status != $3
+	`,
+		entity.StatusCanceled,
+		token,
+		entity.StatusCanceled,
+	)
+}

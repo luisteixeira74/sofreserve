@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"sof-reserve/internal/core/entity"
 )
-
 type ReservationRepository interface {
 	SumByEventID(eventID int64) (int, error)
 
@@ -24,9 +23,10 @@ type ReservationRepository interface {
 		email string,
 	) (bool, error)
 
-	FindByTokenForUpdate(tx *sql.Tx, token string) (entity.Reservation, error)
+	CancelIfAllowed(
+		tx *sql.Tx,
+		token string,
+	) (sql.Result, error)
 
-	UpdateStatus(tx *sql.Tx, id int64, status string) error
-	
 	FindConfirmedByEventID(eventID int64) ([]entity.Reservation, error)
 }

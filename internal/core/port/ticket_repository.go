@@ -18,23 +18,19 @@ type TicketRepository interface {
 		reservationID int64,
 	) ([]entity.Ticket, error)
 
-	FindByToken(
-		token string,
-	) (entity.Ticket, error)
-
-	FindByTokenForUpdate(
+	MarkCheckinIfValid(
 		tx *sql.Tx,
 		token string,
-	) (entity.Ticket, error)
-
-	CheckIn(
-		tx *sql.Tx,
-		token string,
-	) error
+	) (int64, error)
 
 	FindTicketViewByToken(
 		token string,
 	) (entity.TicketView, error)
 
-	GetLastCheckinsByEventID(eventID int64, limit int) ([]entity.LastCheckin, error)
+	FindByToken(token string) (entity.Ticket, error)
+
+	GetLastCheckinsByEventID(
+		eventID int64,
+		limit int,
+	) ([]entity.LastCheckin, error)
 }

@@ -171,14 +171,12 @@ type EventCreateView struct {
 // =====================
 // TICKET VIEW
 // =====================
-
 type TicketViewData struct {
 	EventName    string
 	Token        string
 	TicketNumber int64
 
 	TicketURL    string
-	CheckinURL   string
 	WhatsAppLink string
 
 	IsCheckedIn bool
@@ -953,7 +951,7 @@ func (h *Handler) TicketView(
 		TicketNumber: ticket.TicketNumber,
 
 		TicketURL:  baseURL + "/ticket/" + ticket.Token,
-		CheckinURL: baseURL + "/manage/checkin?token=" + ticket.Token,
+
 		WhatsAppLink: message.BuildTicketWhatsAppMessage(
 			baseURL,
 			ticket,
@@ -974,21 +972,12 @@ func (h *Handler) OwnerCheckin(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-
 	if r.Method != http.MethodPost {
-		http.Error(
-			w,
-			"method not allowed",
-			http.StatusMethodNotAllowed,
-		)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	parts := strings.Split(
-		strings.Trim(r.URL.Path, "/"),
-		"/",
-	)
-
+	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 	if len(parts) < 3 {
 		http.NotFound(w, r)
 		return
@@ -996,63 +985,63 @@ func (h *Handler) OwnerCheckin(
 
 	publicID := parts[1]
 
-	token := strings.TrimSpace(
-		r.FormValue("token"),
-	)
+	token := strings.TrimSpace(r.FormValue("token"))
 
 	log.Println("TOKEN RECEBIDO:", token)
 
 	if token == "" {
-		http.Error(
-			w,
-			"token is required",
-			http.StatusBadRequest,
-		)
+		http.Error(w, "token is required", http.StatusBadRequest)
 		return
 	}
 
 	log.Println("Executando checkin para:", token)
 
+	// 1. EXECUTA CHECK-IN PRIMEIRO (fonte de verdade)
 	err := h.checkinTicketUC.Execute(token)
 
 	log.Printf("Resultado Execute(): %v\n", err)
 
-	view, loadErr := h.loadOwnerDashboard(
-		publicID,
-		"checkin",
-	)
-
+	// 2. CARREGA DASHBOARD SEM DEPENDER DO RESULTADO DO CHECK-IN
+	view, loadErr := h.loadOwnerDashboard(publicID, "checkin")
 	if loadErr != nil {
 		http.NotFound(w, r)
 		return
 	}
 
+	// 3. RESET UI STATE
 	view.UI.CheckinError = ""
 	view.UI.CheckinMessage = ""
 
-		switch err {
+	// 4. MAPEAMENTO DE ERROS (SÓ UI, SEM LÓGICA DE NEGÓCIO)
+	switch err {
 
-		case nil:
-			view.UI.CheckinMessage = "Check-in realizado com sucesso"
+	case nil:
+		view.UI.CheckinMessage = "Check-in realizado com sucesso"
 
-			lastCheckin, _ := h.ticketRepo.GetLastCheckinsByEventID(int64(view.Data.Event.ID), 5)
-			view.LastCheckins = lastCheckin
+	case coreErr.ErrInvalidToken:
+		view.UI.CheckinError = "Token inválido"
 
-		case coreErr.ErrTicketNotFound:
-			view.UI.CheckinError = "Ticket não encontrado"
+	case coreErr.ErrTicketAlreadyCheckedIn:
+		view.UI.CheckinError = "Ticket já utilizado"
 
-		case coreErr.ErrTicketAlreadyCheckedIn:
-			view.UI.CheckinError = "Ticket já utilizado"
+	case coreErr.ErrTicketNotFound:
+		view.UI.CheckinError = "Ticket não encontrado"
 
-		default:
-			http.Error(
-				w,
-				"internal server error",
-				http.StatusInternalServerError,
-			)
-			return
-		}
+	default:
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
 
+	// 5. ATUALIZA CHECKINS SOMENTE EM CASO DE SUCESSO
+	if err == nil {
+		lastCheckin, _ := h.ticketRepo.GetLastCheckinsByEventID(
+			int64(view.Data.Event.ID),
+			5,
+		)
+		view.LastCheckins = lastCheckin
+	}
+
+	// 6. RENDER FINAL
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page:  "event_owner_dashboard",
 		Title: buildTitle("Check-in", view.Data.Event.Name),

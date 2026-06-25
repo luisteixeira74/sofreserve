@@ -2,9 +2,7 @@ package usecase
 
 import (
 	"database/sql"
-	"errors"
 
-	"sof-reserve/internal/core/entity"
 	coreErr "sof-reserve/internal/core/errors"
 	"sof-reserve/internal/core/port"
 )
@@ -34,33 +32,22 @@ func (uc *CancelReservationUseCase) Execute(token string) error {
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
-	reservation, err := uc.reservationRepo.FindByTokenForUpdate(tx, token)
+	res, err := uc.reservationRepo.CancelIfAllowed(tx, token)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return coreErr.ErrReservationNotFound
-		}
 		return err
 	}
 
-	currentStatus := entity.ReservationStatus(reservation.Status)
-
-	if currentStatus == entity.StatusCanceled {
-		return tx.Commit()
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
 	}
 
-	if !entity.CanTransition(currentStatus, entity.StatusCanceled) {
+	if rows == 0 {
 		return coreErr.ErrInvalidStatusTransition
-	}
-
-	err = uc.reservationRepo.UpdateStatus(
-		tx,
-		reservation.ID,
-		string(entity.StatusCanceled),
-	)
-	if err != nil {
-		return err
 	}
 
 	return tx.Commit()

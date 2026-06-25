@@ -3,7 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"sof-reserve/internal/core/entity"
-	coreErr "sof-reserve/internal/core/errors"
 )
 
 type TicketRepository struct {
@@ -82,25 +81,14 @@ func (r *TicketRepository) FindByReservationID(
 	return tickets, nil
 }
 
-func (r *TicketRepository) FindByToken(
-	token string,
-) (entity.Ticket, error) {
-
+func (r *TicketRepository) FindByToken(token string) (entity.Ticket, error) {
 	var ticket entity.Ticket
 
 	err := r.db.QueryRow(`
-		SELECT
-			id,
-			reservation_id,
-			ticket_number,
-			token,
-			checked_in_at,
-			created_at
+		SELECT id, reservation_id, ticket_number, token, checked_in_at, created_at
 		FROM reservation_tickets
 		WHERE token = $1
-	`,
-		token,
-	).Scan(
+	`, token).Scan(
 		&ticket.ID,
 		&ticket.ReservationID,
 		&ticket.TicketNumber,
@@ -110,64 +98,6 @@ func (r *TicketRepository) FindByToken(
 	)
 
 	return ticket, err
-}
-
-func (r *TicketRepository) FindByTokenForUpdate(
-	tx *sql.Tx,
-	token string,
-) (entity.Ticket, error) {
-
-	var ticket entity.Ticket
-
-	err := tx.QueryRow(`
-		SELECT
-			id,
-			reservation_id,
-			ticket_number,
-			token,
-			checked_in_at,
-			created_at
-		FROM reservation_tickets
-		WHERE token = $1
-		FOR UPDATE
-	`,
-		token,
-	).Scan(
-		&ticket.ID,
-		&ticket.ReservationID,
-		&ticket.TicketNumber,
-		&ticket.Token,
-		&ticket.CheckedInAt,
-		&ticket.CreatedAt,
-	)
-
-	return ticket, err
-}
-
-func (r *TicketRepository) CheckIn(
-	tx *sql.Tx,
-	token string,
-) error {
-
-	res, err := tx.Exec(`
-		UPDATE reservation_tickets
-		SET checked_in_at = NOW()
-		WHERE token = $1
-		AND checked_in_at IS NULL
-	`,
-		token,
-	)
-	if err != nil {
-		return err
-	}
-
-	rows, _ := res.RowsAffected()
-
-	if rows == 0 {
-		return coreErr.ErrTicketAlreadyCheckedIn
-	}
-
-	return nil
 }
 
 func (r *TicketRepository) FindTicketViewByToken(
@@ -249,4 +179,28 @@ func (r *TicketRepository) GetLastCheckinsByEventID(
 	}
 
 	return result, nil
+}
+
+func (r *TicketRepository) MarkCheckinIfValid(
+	tx *sql.Tx,
+	token string,
+) (int64, error) {
+
+	res, err := tx.Exec(`
+		UPDATE reservation_tickets
+		SET checked_in_at = NOW()
+		WHERE token = $1
+		AND checked_in_at IS NULL
+	`, token)
+
+	if err != nil {
+		return 0, err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rows, nil
 }
