@@ -24,7 +24,7 @@
     </div>
 
     <!-- ===================== -->
-    <!-- 📊 METRICS -->
+    <!-- METRICS -->
     <!-- ===================== -->
     <div class="section-metrics">
       <p>
@@ -33,7 +33,7 @@
         <span class="value"> {{.Data.Reserved}} / {{.Data.TotalSeats}} </span>
       </p>
 
-      {{if gt .Data.Percentage 0}}
+      {{if gt .Data.TotalSeats 0}}
       <div class="progress-bar">
         <div
           class="progress-fill {{if lt .Data.Percentage 50}}low{{else if lt .Data.Percentage 80}}medium{{else}}high{{end}}"
@@ -65,15 +65,20 @@
         <span class="label">Link público do evento:</span>
       </p>
 
+      {{if .Data.PublicLink}}
       <div class="copy-wrapper">
         <input
           value="{{.Data.PublicLink}}"
           readonly
+          data-ready="true"
           class="input-link copy-input"
         />
 
         <span class="copy-feedback"> copiado! </span>
       </div>
+      {{else}}
+      <p class="muted">Gerando link público...</p>
+      {{end}}
 
       <p class="timestamp">Última atualização: {{.Data.LastUpdated}}</p>
     </div>
@@ -104,9 +109,8 @@
     <div class="section-organizer">
       <p class="muted">
         <span class="prompt">&gt;</span>
-        Organizer workspace:
+        Total de eventos neste email:
         <strong>{{.Data.OrganizerEventCount}}</strong>
-        eventos
       </p>
     </div>
     {{end}}

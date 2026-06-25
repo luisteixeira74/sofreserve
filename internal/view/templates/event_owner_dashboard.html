@@ -169,14 +169,16 @@
         <div class="checkin-item">
 
           <span class="terminal-user">
-            {{ .GuestName }}
+            {{ .Token }}
           </span>
 
-          <span class="terminal-separator">—</span>
+          <span class="terminal-separator">[</span>
 
           <span class="muted">
             {{ .CheckedInAt }}
           </span>
+
+          <span class="terminal-separator">]</span>
 
         </div>
 

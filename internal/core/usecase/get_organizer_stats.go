@@ -13,7 +13,7 @@ func NewGetOrganizerStatsUseCase(repo port.EventRepository) *GetOrganizerStatsUs
 }
 
 type OrganizerStats struct {
-    EventCount int
+    EventCount int64
 }
 
 func (uc *GetOrganizerStatsUseCase) Execute(email string) (OrganizerStats, error) {

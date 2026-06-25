@@ -22,7 +22,12 @@
 
     {{if gt .Data.Available 0}}
 
-    <form method="POST" action="/events/reserve" class="form">
+    <form
+      method="POST"
+      action="/events/reserve"
+      class="form"
+      data-ux="critical-submit"
+    >
       <input type="hidden" name="event_id" value="{{.Data.EventID}}" />
 
       <p>

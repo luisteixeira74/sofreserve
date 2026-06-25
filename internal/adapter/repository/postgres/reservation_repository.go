@@ -13,7 +13,7 @@ func NewReservationRepository(db *sql.DB) *ReservationRepository {
 	return &ReservationRepository{db: db}
 }
 
-func (r *ReservationRepository) SumByEventID(eventID int) (int, error) {
+func (r *ReservationRepository) SumByEventID(eventID int64) (int, error) {
 	var total int
 
 	err := r.db.QueryRow(
@@ -29,7 +29,7 @@ func (r *ReservationRepository) SumByEventID(eventID int) (int, error) {
 
 func (r *ReservationRepository) Create(
 	tx *sql.Tx,
-	eventID int,
+	eventID int64,
 	name string,
 	email string,
 	qty int,
@@ -57,7 +57,7 @@ func (r *ReservationRepository) Create(
 
 func (r *ReservationRepository) ExistsByEventAndEmail(
 	tx *sql.Tx,
-	eventID int,
+	eventID int64,
 	email string,
 ) (bool, error) {
 
@@ -103,7 +103,7 @@ func (r *ReservationRepository) FindByTokenForUpdate(tx *sql.Tx, token string) (
 
 func (r *ReservationRepository) UpdateStatus(
 	tx *sql.Tx,
-	id int,
+	id int64,
 	status string,
 ) error {
 
@@ -127,7 +127,7 @@ func (r *ReservationRepository) UpdateStatus(
 	return err
 }
 
-func (r *ReservationRepository) FindConfirmedByEventID(eventID int) ([]entity.Reservation, error) {
+func (r *ReservationRepository) FindConfirmedByEventID(eventID int64) ([]entity.Reservation, error) {
 	rows, err := r.db.Query(`
 		SELECT
 			id,

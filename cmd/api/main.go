@@ -38,7 +38,6 @@ func main() {
 		database,
 		eventRepo,
 		reservationRepo,
-		ticketRepo,
 		clock,
 	)
 
@@ -60,7 +59,7 @@ func main() {
 		eventRepo,
 	)
 
-	ticketRepo := postgres.NewTicketRepository(database)
+	
 
 	checkinTicketUC := usecase.NewCheckinTicket(
 		database,

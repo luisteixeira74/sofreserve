@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"database/sql"
-	"errors"
 	appErrors "sof-reserve/internal/core/errors"
 	"sof-reserve/internal/core/port"
 )
@@ -24,6 +23,9 @@ func NewCheckinTicket(
 }
 
 func (u *CheckinTicket) Execute(token string) error {
+	if token == "" {
+		return appErrors.ErrInvalidToken
+	}
 
 	tx, err := u.DB.Begin()
 	if err != nil {
@@ -32,29 +34,7 @@ func (u *CheckinTicket) Execute(token string) error {
 
 	defer tx.Rollback()
 
-	ticket, err := u.TicketRepo.FindByTokenForUpdate(
-		tx,
-		token,
-	)
-
-	if err != nil {
-
-		if errors.Is(err, sql.ErrNoRows) {
-			return appErrors.ErrTicketNotFound
-		}
-
-		return err
-	}
-
-	if ticket.CheckedInAt != nil {
-		return appErrors.ErrTicketAlreadyCheckedIn
-	}
-
-	err = u.TicketRepo.CheckIn(
-		tx,
-		ticket.ID,
-	)
-
+	err = u.TicketRepo.CheckIn(tx, token)
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"sof-reserve/internal/core/entity"
+	coreErr "sof-reserve/internal/core/errors"
 )
 
 type TicketRepository struct {
@@ -16,16 +17,18 @@ func NewTicketRepository(db *sql.DB) *TicketRepository {
 func (r *TicketRepository) Create(
 	tx *sql.Tx,
 	reservationID int64,
+	eventID int64,
 	ticketNumber int,
 	token string,
 ) error {
 
 	_, err := tx.Exec(`
 		INSERT INTO reservation_tickets
-		(reservation_id, ticket_number, token)
-		VALUES ($1, $2, $3)
+		(reservation_id, event_id, ticket_number, token)
+		VALUES ($1, $2, $3, $4)
 	`,
 		reservationID,
+		eventID,
 		ticketNumber,
 		token,
 	)
@@ -143,19 +146,28 @@ func (r *TicketRepository) FindByTokenForUpdate(
 
 func (r *TicketRepository) CheckIn(
 	tx *sql.Tx,
-	ticketID int64,
+	token string,
 ) error {
 
-	_, err := tx.Exec(`
+	res, err := tx.Exec(`
 		UPDATE reservation_tickets
 		SET checked_in_at = NOW()
-		WHERE id = $1
+		WHERE token = $1
 		AND checked_in_at IS NULL
 	`,
-		ticketID,
+		token,
 	)
+	if err != nil {
+		return err
+	}
 
-	return err
+	rows, _ := res.RowsAffected()
+
+	if rows == 0 {
+		return coreErr.ErrTicketAlreadyCheckedIn
+	}
+
+	return nil
 }
 
 func (r *TicketRepository) FindTicketViewByToken(
@@ -190,4 +202,51 @@ func (r *TicketRepository) FindTicketViewByToken(
 	}
 
 	return ticket, nil
+}
+
+func (r *TicketRepository) GetLastCheckinsByEventID(
+	eventID int64,
+	limit int,
+) ([]entity.LastCheckin, error) {
+
+	query := `
+		SELECT 
+			t.ticket_number,
+			t.token,
+			t.checked_in_at
+		FROM reservation_tickets t
+		WHERE t.event_id = $1
+		  AND t.checked_in_at IS NOT NULL
+		ORDER BY t.checked_in_at DESC
+		LIMIT $2
+	`
+
+	rows, err := r.db.Query(query, eventID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []entity.LastCheckin
+
+	for rows.Next() {
+		var lc entity.LastCheckin
+
+		err := rows.Scan(
+			&lc.TicketNumber,
+			&lc.Token,
+			&lc.CheckedInAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, lc)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

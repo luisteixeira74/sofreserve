@@ -14,7 +14,7 @@ func NewGetEventUseCase(repo port.EventRepository) *GetEventUseCase {
 	return &GetEventUseCase{repo: repo}
 }
 
-func (uc *GetEventUseCase) Execute(id int) (entity.Event, error) {
+func (uc *GetEventUseCase) Execute(id int64) (entity.Event, error) {
 	if id <= 0 {
 		return entity.Event{}, errors.New("invalid event id")
 	}

@@ -13,8 +13,8 @@ func NewEventRepository(db *sql.DB) *EventRepository {
 	return &EventRepository{db: db}
 }
 
-func (r *EventRepository) Create(event entity.Event) (int, error) {
-	var eventID int
+func (r *EventRepository) Create(event entity.Event) (int64, error) {
+	var eventID int64
 
 	err := r.db.QueryRow(`
 		INSERT INTO events
@@ -33,7 +33,7 @@ func (r *EventRepository) Create(event entity.Event) (int, error) {
 	return eventID, err
 }
 
-func (r *EventRepository) GetByID(id int) (entity.Event, error) {
+func (r *EventRepository) GetByID(id int64) (entity.Event, error) {
 	var e entity.Event
 
 	err := r.db.QueryRow(
@@ -71,7 +71,7 @@ func (r *EventRepository) GetByPublicID(publicID string) (entity.Event, error) {
 	return e, err
 }
 
-func (r *EventRepository) FindByIDForUpdate(tx *sql.Tx, id int) (entity.Event, error) {
+func (r *EventRepository) FindByIDForUpdate(tx *sql.Tx, id int64) (entity.Event, error) {
 	var e entity.Event
 
 	err := tx.QueryRow(
@@ -122,8 +122,8 @@ func (r *EventRepository) FindByOwnerToken(token string) (entity.Event, error) {
 	return event, nil
 }
 
-func (r *EventRepository) CountEventsByOrganizerEmail(email string) (int, error) {
-	var count int
+func (r *EventRepository) CountEventsByOrganizerEmail(email string) (int64, error) {
+	var count int64
 
 	err := r.db.QueryRow(`
 		SELECT COUNT(*)

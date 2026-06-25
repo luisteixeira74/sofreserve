@@ -3,8 +3,8 @@ package entity
 import "time"
 
 type Reservation struct {
-	ID       int
-	EventID  int
+	ID       int64
+	EventID  int64
 	Name     string
 	Email    string
 	Quantity int

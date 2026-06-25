@@ -29,7 +29,7 @@ func (RealClock) Now() time.Time {
 //
 
 type EventView struct {
-	ID            int
+	ID            int64
 	Name          string
 	TotalSeats    int
 	Reserved      int
@@ -72,7 +72,7 @@ func NewGetEventViewUseCase(
 // =====================
 //
 
-func (uc *GetEventViewUseCase) Execute(eventID int) (EventView, error) {
+func (uc *GetEventViewUseCase) Execute(eventID int64) (EventView, error) {
 	event, err := uc.eventRepo.GetByID(eventID)
 	if err != nil {
 		return EventView{}, err
@@ -123,7 +123,7 @@ func (uc *GetEventViewUseCase) ExecuteByPublicID(publicID string) (EventView, er
 //
 
 func (uc *GetEventViewUseCase) build(
-	id int,
+	id int64,
 	name string,
 	totalSeats int,
 	reserved int,

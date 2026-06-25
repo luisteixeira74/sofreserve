@@ -27,7 +27,7 @@ type CreateEventInput struct {
 	OwnerToken     string
 }
 
-func (uc *CreateEventUseCase) Execute(input CreateEventInput) (int, error) {
+func (uc *CreateEventUseCase) Execute(input CreateEventInput) (int64, error) {
 
 	if input.Name == "" {
 		return 0, coreErr.ErrInvalidName

@@ -580,6 +580,17 @@ input:-webkit-autofill {
   margin-top: 4px;
 }
 
+.copy-input.typing {
+  opacity: 0.6;
+  cursor: wait;
+  font-style: italic;
+}
+
+.copy-input[data-ready="true"] {
+  opacity: 1;
+  cursor: pointer;
+}
+
 .copy-feedback {
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -918,4 +929,11 @@ input:-webkit-autofill {
   padding-top: 24px;
 
   border-top: 1px dashed rgba(34, 197, 94, 0.08);
+}
+
+form.loading {
+  opacity: 0.65;
+  pointer-events: none;
+  filter: grayscale(0.2);
+  transition: 0.2s ease;
 }

@@ -6,11 +6,11 @@ import (
 )
 
 type ReservationRepository interface {
-	SumByEventID(eventID int) (int, error)
+	SumByEventID(eventID int64) (int, error)
 
 	Create(
 		tx *sql.Tx,
-		eventID int,
+		eventID int64,
 		name string,
 		email string,
 		qty int,
@@ -20,13 +20,13 @@ type ReservationRepository interface {
 
 	ExistsByEventAndEmail(
 		tx *sql.Tx,
-		eventID int,
+		eventID int64,
 		email string,
 	) (bool, error)
 
 	FindByTokenForUpdate(tx *sql.Tx, token string) (entity.Reservation, error)
 
-	UpdateStatus(tx *sql.Tx, id int, status string) error
+	UpdateStatus(tx *sql.Tx, id int64, status string) error
 	
-	FindConfirmedByEventID(eventID int) ([]entity.Reservation, error)
+	FindConfirmedByEventID(eventID int64) ([]entity.Reservation, error)
 }

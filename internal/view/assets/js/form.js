@@ -1,15 +1,52 @@
+// =====================
+// UI STATE MANAGER
+// =====================
+
+const UI = {
+  loadingOverlay: null,
+
+  loading: {
+    start() {
+      let overlay = document.getElementById("loading-overlay");
+
+      if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "loading-overlay";
+        overlay.innerHTML = `
+          <div class="loading-box">
+            <span class="prompt">&gt;</span> processando...
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      }
+
+      overlay.style.display = "flex";
+      UI.loadingOverlay = overlay;
+    },
+
+    stop() {
+      const overlay = document.getElementById("loading-overlay");
+      if (overlay) overlay.style.display = "none";
+    },
+  },
+};
+
+// =====================
+// FORM HANDLING (CRITICAL)
+// =====================
+
 document.addEventListener("DOMContentLoaded", () => {
-  const forms = document.querySelectorAll("form");
+  const forms = document.querySelectorAll("form[data-ux='critical-submit']");
 
   forms.forEach((form) => {
     form.addEventListener("submit", (e) => {
-      // evita múltiplos submits
       if (form.dataset.submitting === "true") {
         e.preventDefault();
         return;
       }
 
       form.dataset.submitting = "true";
+      form.classList.add("loading");
 
       const btn = form.querySelector("[data-loading='true']");
 
@@ -18,53 +55,66 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.dataset.originalText = btn.innerText || btn.value;
 
         if (btn.tagName === "BUTTON") {
-          btn.innerText = "Carregando...";
+          btn.innerText = "executando...";
         } else {
-          btn.value = "Carregando...";
+          btn.value = "executando...";
         }
       }
 
-      showLoadingOverlay();
+      UI.loading.start();
     });
   });
 });
 
-function showLoadingOverlay() {
-  let overlay = document.getElementById("loading-overlay");
+// =====================
+// SAFE RESET (IMPORTANT)
+// =====================
 
-  if (!overlay) {
-    overlay = document.createElement("div");
-    overlay.id = "loading-overlay";
-    overlay.innerHTML = `
-      <div class="loading-box">
-        <span class="prompt">&gt;</span> processando...
-      </div>
-    `;
-    document.body.appendChild(overlay);
-  }
+// garante que nunca fica travado após redirect
+window.addEventListener("pageshow", () => {
+  UI.loading.stop();
 
-  overlay.style.display = "flex";
-}
-
-function setSeats(value) {
-  const input = document.getElementById("seats");
-  input.value = value;
-}
-
-function changeSeats(delta) {
-  const input = document.getElementById("seats");
-  let current = parseInt(input.value || 0, 10);
-
-  current += delta;
-
-  if (current < 1) current = 1;
-  if (current > 999) current = 999;
-
-  input.value = current;
-}
+  document.querySelectorAll("form").forEach((form) => {
+    form.dataset.submitting = "false";
+    form.classList.remove("loading");
+  });
+});
 
 // =====================
-// TYPING EFFECT (CONFIRM LINK)
+// COPY LINK
+// =====================
+
+document.addEventListener("DOMContentLoaded", () => {
+  const inputs = document.querySelectorAll(".copy-input");
+
+  inputs.forEach((input) => {
+    input.addEventListener("click", async () => {
+      if (input.dataset.ready && input.dataset.ready !== "true") {
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(input.value);
+
+        const feedback = input.parentElement.querySelector(".copy-feedback");
+
+        if (feedback) {
+          feedback.classList.add("show");
+
+          setTimeout(() => {
+            feedback.classList.remove("show");
+          }, 1200);
+        }
+      } catch (err) {
+        input.select();
+        document.execCommand("copy");
+      }
+    });
+  });
+});
+
+// =====================
+// TYPING EFFECT
 // =====================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -98,7 +148,6 @@ document.addEventListener("DOMContentLoaded", () => {
           input.disabled = false;
 
           input.classList.remove("typing");
-
           input.onclick = () => input.select();
         }
       }, 20);
@@ -107,87 +156,48 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =====================
-// CANCEL CONFIRM FLOW
+// HERO FLOW
 // =====================
-
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("cancel-btn");
-  const msg = document.getElementById("confirm-msg");
-  const actions = document.getElementById("confirm-actions");
-
-  const yes = document.getElementById("confirm-yes");
-  const no = document.getElementById("confirm-no");
-
-  if (!btn) return;
-
-  // pega token do HTML (correto)
-  const token = btn.dataset.token;
-
-  btn.addEventListener("click", () => {
-    msg.style.display = "block";
-    actions.style.display = "block";
-    btn.style.display = "none";
-  });
-
-  yes.addEventListener("click", () => {
-    window.location.href = "/cancel?token=" + token;
-  });
-
-  no.addEventListener("click", () => {
-    msg.style.display = "none";
-    actions.style.display = "none";
-    btn.style.display = "inline-block";
-  });
-});
-
-// =====================
-// COPY LINK
-// =====================
-
-document.addEventListener("DOMContentLoaded", () => {
-  const inputs = document.querySelectorAll(".copy-input");
-
-  inputs.forEach((input) => {
-    input.addEventListener("click", async () => {
-      if (input.dataset.ready !== "true") {
-        return;
-      }
-
-      try {
-        await navigator.clipboard.writeText(input.value);
-
-        const feedback = input.parentElement.querySelector(".copy-feedback");
-
-        if (feedback) {
-          feedback.classList.add("show");
-
-          setTimeout(() => {
-            feedback.classList.remove("show");
-          }, 1200);
-        }
-      } catch (err) {
-        input.select();
-        document.execCommand("copy");
-      }
-    });
-  });
-});
 
 const steps = document.querySelectorAll(".hero-flow .step");
 
-let i = 0;
+if (steps.length > 0) {
+  let i = 0;
 
-function activateStep(index) {
-  steps.forEach((s) => s.classList.remove("active"));
-  steps[index].classList.add("active");
+  function activateStep(index) {
+    steps.forEach((s) => s.classList.remove("active"));
+    steps[index].classList.add("active");
+  }
+
+  setTimeout(() => {
+    activateStep(0);
+
+    setInterval(() => {
+      i = (i + 1) % steps.length;
+      activateStep(i);
+    }, 3000);
+  }, 6000);
 }
 
-// delay inicial (6s)
-setTimeout(() => {
-  activateStep(0);
+// =====================
+// UTILITIES
+// =====================
 
-  setInterval(() => {
-    i = (i + 1) % steps.length;
-    activateStep(i);
-  }, 3000);
-}, 6000);
+function setSeats(value) {
+  const input = document.getElementById("seats");
+  if (input) input.value = value;
+}
+
+function changeSeats(delta) {
+  const input = document.getElementById("seats");
+  if (!input) return;
+
+  let current = parseInt(input.value || 0, 10);
+
+  current += delta;
+
+  if (current < 1) current = 1;
+  if (current > 999) current = 999;
+
+  input.value = current;
+}

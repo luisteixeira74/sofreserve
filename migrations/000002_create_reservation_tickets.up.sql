@@ -7,6 +7,8 @@ CREATE TABLE reservation_tickets (
 
     token VARCHAR(255) NOT NULL UNIQUE,
 
+    event_id BIGINT,
+
     checked_in_at TIMESTAMP NULL,
 
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),

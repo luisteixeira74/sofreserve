@@ -3,7 +3,7 @@ package entity
 import "time"
 
 type Event struct {
-	ID         int
+	ID         int64
 	Name       string
 	TotalSeats int
 	EndsAt     time.Time

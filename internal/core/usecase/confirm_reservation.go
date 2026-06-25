@@ -166,6 +166,7 @@ if err != nil {
 tickets, err = uc.generateTickets(
 	tx,
 	reservationID,
+	eventID,
 	quantity,
 )
 
@@ -233,6 +234,7 @@ func (uc *ConfirmReservationUseCase) loadReservationTickets(
 func (uc *ConfirmReservationUseCase) generateTickets(
 	tx *sql.Tx,
 	reservationID int,
+	eventID int,
 	quantity int,
 ) ([]ReservationTicketOutput, error) {
 
@@ -240,17 +242,22 @@ func (uc *ConfirmReservationUseCase) generateTickets(
 
 	for i := 1; i <= quantity; i++ {
 
-		ticketToken := security.GenerateTicketToken()
+		ticketToken, err := security.GenerateTicketToken()
+		if err != nil {
+			return nil, err
+		}
 
-		_, err := tx.Exec(`
+		_, err = tx.Exec(`
 			INSERT INTO reservation_tickets (
 				reservation_id,
+				event_id,
 				ticket_number,
 				token
 			)
-			VALUES ($1, $2, $3)
+			VALUES ($1, $2, $3, $4)
 		`,
 			reservationID,
+			eventID,
 			i,
 			ticketToken,
 		)

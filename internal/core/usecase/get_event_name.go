@@ -10,7 +10,7 @@ func NewGetEventNameUseCase(repo port.EventRepository) *GetEventNameUseCase {
 	return &GetEventNameUseCase{repo: repo}
 }
 
-func (uc *GetEventNameUseCase) Execute(id int) (string, error) {
+func (uc *GetEventNameUseCase) Execute(id int64) (string, error) {
 	event, err := uc.repo.GetByID(id)
 	if err != nil {
 		return "", err

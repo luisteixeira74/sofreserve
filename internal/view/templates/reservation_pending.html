@@ -42,15 +42,17 @@
 
     <p class="muted typing-msg">
       <span class="prompt">&gt;</span>
-      Gerando seu link de confirmação...
+      Gerando link de confirmação...
     </p>
 
     <div class="copy-wrapper">
       <input
         class="input-link typing dynamic-link copy-input"
         data-link="{{.Data.ConfirmLink}}"
+        data-ready="false"
         readonly
       />
+
       <span class="copy-feedback">copiado!</span>
     </div>
   </div>

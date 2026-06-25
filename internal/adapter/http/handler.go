@@ -35,7 +35,7 @@ var tmpl = template.Must(
 // =====================
 
 type EventView struct {
-	ID            int
+	ID            int64
 	Name          string
 	TotalSeats    int
 	Reserved      int
@@ -48,7 +48,7 @@ type EventView struct {
 	LastUpdated   string
 	PublicLink    string
 
-	OrganizerEventCount int
+	OrganizerEventCount int64
 	OrganizerEmail      string
 
 	WhatsAppShareText string
@@ -91,16 +91,9 @@ type EventOwnerDashboardView struct {
 
 	UI EventDashboardUIState
 
-	LastCheckins []LastCheckin
+	LastCheckins []entity.LastCheckin
 }
 
-// =====================
-// LAST CHECKIN
-// =====================
-
-type LastCheckin struct {
-	GuestName string
-}
 
 // =====================
 // RESERVATION PAGE
@@ -108,7 +101,7 @@ type LastCheckin struct {
 
 type ReservationPageData struct {
 	Error       string
-	EventID     int
+	EventID     int64
 	Name        string
 	Email       string
 	Quantity    int
@@ -147,8 +140,9 @@ type ReservationCancelView struct {
 type ReservationTicketView struct {
 	Token        string
 	QRCodeURL    string
-	Number       int
+	Number       int64
 	WhatsAppLink string
+	DisplayToken string
 }
 
 type ReservationConfirmedView struct {
@@ -181,7 +175,7 @@ type EventCreateView struct {
 type TicketViewData struct {
 	EventName    string
 	Token        string
-	TicketNumber int
+	TicketNumber int64
 
 	TicketURL    string
 	CheckinURL   string
@@ -334,7 +328,7 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 
 	publicID := id.GeneratePublicID()
 
-	ownerToken, err := security.GenerateToken()
+	ownerToken, err := security.GenerateOwnerToken()
 	if err != nil {
 		http.Error(w, "erro ao gerar token", http.StatusInternalServerError)
 		return
@@ -763,22 +757,14 @@ func (h *Handler) ConfirmReservation(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		ticket.QRCodeURL =
-			baseURL + "/ticket/" + ticket.Token
-
-		ticketView := entity.TicketView{
-			EventName:    eventName,
-			Token:        ticket.Token,
-			TicketNumber: ticket.Number,
-		}
-
-		ticket.WhatsAppLink =
-			message.BuildTicketWhatsAppMessage(
-				baseURL,
-				ticketView,
-			)
-
 		tickets = append(tickets, ticket)
+	}
+
+	// mapping (view enrichment)
+	builder := TicketViewBuilder{}
+
+	for i := range tickets {
+		tickets[i] = builder.Build(baseURL, eventName, tickets[i])
 	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
@@ -883,33 +869,58 @@ func (h *Handler) OwnerDashboard(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	// =====================
+	// PATH PARSING SEGURO
+	// =====================
+	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 
-	parts := strings.Split(
-		strings.Trim(r.URL.Path, "/"),
-		"/",
-	)
+	if len(parts) < 3 {
+		http.NotFound(w, r)
+		return
+	}
 
-	if len(parts) < 2 {
+	if parts[0] != "events" {
 		http.NotFound(w, r)
 		return
 	}
 
 	publicID := parts[1]
 
+	// =====================
+	// TAB VALIDATION
+	// =====================
 	tab := r.URL.Query().Get("tab")
-	if tab == "" {
+
+	switch tab {
+	case "", "reservations", "checkin":
+		// ok
+	default:
 		tab = "reservations"
 	}
 
+	// =====================
+	// LOAD VIEW
+	// =====================
 	view, err := h.loadOwnerDashboard(publicID, tab)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
+	// =====================
+	// TITLE CONTEXTUAL
+	// =====================
+	titleLabel := "Reservas"
+	if tab == "checkin" {
+		titleLabel = "Check-in"
+	}
+
+	// =====================
+	// RENDER
+	// =====================
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page:  "event_owner_dashboard",
-		Title: buildTitle("Reservas", view.Data.Event.Name),
+		Title: buildTitle(titleLabel, view.Data.Event.Name),
 		Data:  view,
 	})
 }
@@ -1024,9 +1035,8 @@ func (h *Handler) OwnerCheckin(
 		case nil:
 			view.UI.CheckinMessage = "Check-in realizado com sucesso"
 
-			view.LastCheckins = append(view.LastCheckins, LastCheckin{
-				GuestName: token,
-			})
+			lastCheckin, _ := h.ticketRepo.GetLastCheckinsByEventID(int64(view.Data.Event.ID), 5)
+			view.LastCheckins = lastCheckin
 
 		case coreErr.ErrTicketNotFound:
 			view.UI.CheckinError = "Ticket não encontrado"
@@ -1072,9 +1082,11 @@ func (h *Handler) handleReservationError(w http.ResponseWriter, err error, data 
 
 func (h *Handler) parseReservationInput(
 	r *http.Request,
-) (int, int, string, string, error) {
+) (int64, int, string, string, error) {
 
-	eventID, err := strconv.Atoi(r.FormValue("event_id"))
+	eventIDStr := r.FormValue("event_id")
+
+	eventID, err := strconv.ParseInt(eventIDStr, 10, 64)
 	if err != nil || eventID <= 0 {
 		return 0, 0, "", "", errors.New("evento inválido")
 	}
@@ -1090,39 +1102,23 @@ func (h *Handler) parseReservationInput(
 	var validationErrors []string
 
 	if name == "" {
-		validationErrors = append(
-			validationErrors,
-			"Nome é obrigatório",
-		)
+		validationErrors = append(validationErrors, "Nome é obrigatório")
 	}
 
 	if email == "" {
-		validationErrors = append(
-			validationErrors,
-			"Email é obrigatório",
-		)
+		validationErrors = append(validationErrors, "Email é obrigatório")
 	}
 
 	if email != "" && !strings.Contains(email, "@") {
-		validationErrors = append(
-			validationErrors,
-			"Email inválido",
-		)
+		validationErrors = append(validationErrors, "Email inválido")
 	}
 
 	if qty <= 0 {
-		validationErrors = append(
-			validationErrors,
-			"Quantidade deve ser maior que zero",
-		)
+		validationErrors = append(validationErrors, "Quantidade deve ser maior que zero")
 	}
 
 	if len(validationErrors) > 0 {
-		return eventID,
-			qty,
-			name,
-			email,
-			errors.New(strings.Join(validationErrors, ", "))
+		return eventID, qty, name, email, errors.New(strings.Join(validationErrors, ", "))
 	}
 
 	return eventID, qty, name, email, nil
@@ -1148,10 +1144,19 @@ func (h *Handler) loadOwnerDashboard(
 		return EventOwnerDashboardView{}, err
 	}
 
+	// =====================
+	// 🔥 FIX: CHECKINS SEMPRE DO BANCO
+	// =====================
+	lastCheckins, err := h.ticketRepo.GetLastCheckinsByEventID(event.ID, 5)
+	if err != nil {
+		return EventOwnerDashboardView{}, err
+	}
+
 	return h.buildOwnerDashboard(
 		event,
 		reservations,
 		totalConfirmed,
+		lastCheckins,
 		tab,
 	), nil
 }
@@ -1160,6 +1165,7 @@ func (h *Handler) buildOwnerDashboard(
 	event usecase.EventView,
 	reservations []entity.Reservation,
 	totalConfirmed int,
+	lastCheckins []entity.LastCheckin,
 	tab string,
 ) EventOwnerDashboardView {
 
@@ -1208,5 +1214,7 @@ func (h *Handler) buildOwnerDashboard(
 		UI: EventDashboardUIState{
 			ActiveTab: tab,
 		},
+
+		LastCheckins: lastCheckins,
 	}
 }
