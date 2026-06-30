@@ -46,7 +46,7 @@ func NewRouter(
 	mux.HandleFunc("/health", handler.HealthHandler)
 
 	// pages
-	mux.HandleFunc("/onboarding", handler.OnboardingPage)
+	mux.HandleFunc("/", handler.LandingPage)
 
 	// events
 	mux.HandleFunc("/events/new", handler.CreateEventPage) // GET

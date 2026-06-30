@@ -451,12 +451,18 @@ input:-webkit-autofill {
   color: #00ff9c;
   letter-spacing: 1px;
   text-transform: uppercase;
-  text-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+  text-shadow:
+    0 0 6px rgba(0, 255, 156, 0.35),
+    0 0 14px rgba(0, 255, 156, 0.15);
+}
+
+.logo a {
+  color: inherit;
+  text-decoration: none;
 }
 
 .logo .secondary {
-  color: #ffffff;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 @keyframes terminal-blink {
@@ -472,9 +478,10 @@ input:-webkit-autofill {
 }
 
 .logo .primary::before {
-  content: ">";
-  margin-right: 4px;
-  color: #15803d;
+  content: "▸";
+  margin-right: 6px;
+  color: #00ff9c;
+  opacity: 0.8;
   animation: terminal-blink 1.8s infinite;
 }
 
@@ -857,73 +864,27 @@ input:-webkit-autofill {
 
 .nav-terminal {
   display: flex;
-  gap: 18px;
-
-  padding: 8px 14px;
-
-  background: rgba(2, 6, 23, 0.45);
-
-  border: 1px solid rgba(34, 197, 94, 0.15);
-  border-radius: 8px;
-
-  box-shadow:
-    0 0 8px rgba(34, 197, 94, 0.08),
-    inset 0 0 8px rgba(34, 197, 94, 0.04);
+  align-items: center;
+  gap: 4px;
 }
 
-/* LINKS */
+.nav-terminal .prompt {
+  color: #73dca1;
+  font-family: "Courier New", monospace;
+  margin-right: 2px;
+}
 
 .nav-terminal a {
-  color: rgba(115, 220, 161, 0.85);
-
+  color: rgba(156, 163, 175, 0.9);
   text-decoration: none;
+}
 
-  font-family: "Courier New", monospace;
-
-  font-size: 13px;
-
-  letter-spacing: 0.4px;
-
-  position: relative;
-
-  transition: all 0.2s ease;
+.nav-terminal a + a {
+  margin-left: 28px; /* espaço apenas entre os links */
 }
 
 .nav-terminal a:hover {
   color: #73dca1;
-
-  text-shadow:
-    0 0 6px rgba(34, 197, 94, 0.6),
-    0 0 12px rgba(34, 197, 94, 0.25);
-}
-
-/* underline terminal */
-
-.nav-terminal a::after {
-  content: "";
-
-  position: absolute;
-
-  left: 0;
-  bottom: -3px;
-
-  width: 100%;
-  height: 1px;
-
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(34, 197, 94, 0.9),
-    transparent
-  );
-
-  transform: scaleX(0);
-
-  transition: transform 0.2s ease;
-}
-
-.nav-terminal a:hover::after {
-  transform: scaleX(1);
 }
 
 .checkin-panel {
@@ -942,4 +903,13 @@ form.loading {
   pointer-events: none;
   filter: grayscale(0.2);
   transition: 0.2s ease;
+}
+
+.brand-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand-link:hover {
+  color: rgba(115, 220, 161, 0.95);
 }

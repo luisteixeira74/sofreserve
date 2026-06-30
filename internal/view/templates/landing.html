@@ -1,0 +1,71 @@
+{{ define "landing" }}
+
+<div class="terminal-card">
+  <div class="terminal-header">SofReserve</div>
+
+  <div class="terminal-body">
+    <p class="terminal-intro">
+      Plataforma de reservas para eventos com Magic Links e check-in atômico.
+    </p>
+
+    <br />
+
+    <div class="terminal-section">
+      <p>
+        <span class="prompt">&gt;</span>
+        Crie um evento
+      </p>
+
+      <small>
+        Defina capacidade, data e compartilhe um link público para receber
+        reservas.
+      </small>
+
+      <br /><br />
+
+      <p>
+        <span class="prompt">&gt;</span>
+        Confirmação automática
+      </p>
+
+      <small>
+        Os participantes confirmam presença através de Magic Links enviados por
+        e-mail.
+      </small>
+
+      <br /><br />
+
+      <p>
+        <span class="prompt">&gt;</span>
+        QR Code + Check-in
+      </p>
+
+      <small>
+        Cada reserva gera um ticket único. O check-in utiliza atualização
+        atômica no PostgreSQL para impedir múltiplas entradas.
+      </small>
+    </div>
+
+    <br />
+
+    <div class="terminal-card-small">
+      <div class="terminal-header">Arquitetura</div>
+
+      <div class="terminal-body">
+        <p>> Go</p>
+        <p>> PostgreSQL</p>
+        <p>> Magic Links</p>
+        <p>> Atomic Check-in</p>
+        <p>> Stress Tested</p>
+      </div>
+    </div>
+
+    <br />
+
+    <div class="onboarding-actions">
+      <a href="/events/new" class="btn-terminal"> CRIAR EVENTO </a>
+    </div>
+  </div>
+</div>
+
+{{ end }}

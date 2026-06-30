@@ -11,16 +11,28 @@ import (
 
 	httpadapter "sof-reserve/internal/adapter/http"
 	"sof-reserve/internal/adapter/repository/postgres"
+	"sof-reserve/internal/config"
 	"sof-reserve/internal/core/usecase"
 	"sof-reserve/internal/infra/db"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	_ = godotenv.Load()
+
+	cfg := config.Load()
+
 	// =====================
 	// INFRA (DB)
 	// =====================
-	database := db.NewConnection()
+	database := db.NewConnection(cfg)
 	defer database.Close()
+
+	// =====================
+	// PORT
+	// =====================
+	port := cfg.Port
 
 	// =====================
 	// REPOSITORIES
@@ -83,13 +95,7 @@ func main() {
 
 	)
 
-	// =====================
-	// PORT
-	// =====================
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+
 
 	// =====================
 	// SERVER CONFIG

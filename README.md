@@ -53,6 +53,14 @@ migrations/
 
 ---
 
+## Configuration (Edit the environment variables)
+
+```bash
+cp .env.example .env
+```
+
+---
+
 ## Running locally
 
 ### 1. Start database

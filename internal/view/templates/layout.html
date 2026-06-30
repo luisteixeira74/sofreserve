@@ -4,25 +4,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sofreserve</title>
+    <title>{{if .Title}}{{.Title}} • {{end}}SofReserve</title>
     <link rel="stylesheet" href="/assets/css/style.css" />
   </head>
 
   <body class="app">
     <header class="header">
       <div class="logo">
-        <span class="primary"> SOF</span>/<span class="secondary">RESERVE</span>
+        <a href="/" class="logo-link">
+          <span class="primary">SOF</span>/<span class="secondary"
+            >RESERVE</span
+          >
+        </a>
       </div>
 
       <nav class="nav nav-terminal">
-        <a href="/onboarding">&gt; início</a>
-        <a href="/events/new">&gt; criar evento</a>
+        <a href="/events/new">&gt; Criar evento</a>
       </nav>
     </header>
 
     <main class="container">
-      {{if eq .Page "onboarding"}} {{template "onboarding" .}} {{else if eq
-      .Page "event_create"}} {{template "event_create" .}} {{else if eq .Page
+      {{if eq .Page "landing"}} {{template "landing" .}} {{else if eq .Page
+      "event_create"}} {{template "event_create" .}} {{else if eq .Page
       "event_dashboard"}} {{template "event_dashboard" .}} {{else if eq .Page
       "reservation_form"}} {{template "reservation_form" .}} {{else if eq .Page
       "reservation_confirmed"}} {{template "reservation_confirmed" .}} {{else if

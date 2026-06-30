@@ -244,10 +244,10 @@ func buildTitle(page string, context string) string {
 // PAGES
 // =====================
 
-func (h *Handler) OnboardingPage(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) LandingPage(w http.ResponseWriter, r *http.Request) {
 	h.renderTemplate(w, "layout", RenderTemplateData{
-		Page:  "onboarding",
-		Title: buildTitle("Onboarding", ""),
+		Page:  "landing",
+		Title: buildTitle("What's Sof/Reserve", ""),
 	})
 }
 
