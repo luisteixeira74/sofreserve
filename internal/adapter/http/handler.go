@@ -368,27 +368,30 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 // EVENT VIEW
 // =====================
 
-func (h *Handler) EventPageByPublicID(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+func (h *Handler) EventPageByPublicID(
+    w http.ResponseWriter,
+    r *http.Request,
+) {
+    parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 
-	if len(parts) < 2 || parts[1] == "" {
-		http.NotFound(w, r)
-		return
-	}
+    if len(parts) < 2 || parts[1] == "" {
+        http.NotFound(w, r)
+        return
+    }
 
-	publicID := parts[1]
+    // owner dashboard
+    if len(parts) == 3 && parts[2] == "reservations" {
+        h.OwnerDashboard(w, r)
+        return
+    }
 
-	// reservations page
-	if len(parts) == 3 && parts[2] == "reservations" {
-		h.EventReservationsPage(w, r, publicID)
-		return
-	}
+    publicID := parts[1]
 
-	ucView, err := h.eventViewUC.ExecuteByPublicID(publicID)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
+    ucView, err := h.eventViewUC.ExecuteByPublicID(publicID)
+    if err != nil {
+        http.NotFound(w, r)
+        return
+    }
 
 	baseURL := getBaseURL(r)
 
@@ -433,57 +436,6 @@ func (h *Handler) EventPageByPublicID(w http.ResponseWriter, r *http.Request) {
 		Page:  "event_dashboard",
 		Title: buildTitle("Dashboard", view.Name),
 		Data:  view,
-	})
-}
-
-func (h *Handler) EventReservationsPage(
-	w http.ResponseWriter,
-	r *http.Request,
-	publicID string,
-) {
-	tab := r.URL.Query().Get("tab")
-	if tab == "" {
-		tab = "reservations"
-	}
-
-	event, err := h.eventViewUC.ExecuteByPublicID(publicID)
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	reservations, err := h.reservationRepo.FindConfirmedByEventID(event.ID)
-	if err != nil {
-		http.Error(w, "failed to load reservations", http.StatusInternalServerError)
-		return
-	}
-
-	baseURL := "http://localhost:8080"
-
-	eventViewMapped := mapEventView(event)
-
-	data := EventOwnerDashboardView{
-		Title: "Event Dashboard",
-
-		Data: EventDashboardData{
-			Event: eventViewMapped,
-
-			PublicLink: fmt.Sprintf("%s/e/%s", baseURL, event.PublicID),
-
-			LastUpdated: time.Now().Format("15:04:05"),
-
-			Reservations: reservations,
-		},
-
-		UI: EventDashboardUIState{
-			ActiveTab: tab,
-		},
-	}
-
-	h.renderTemplate(w, "layout", RenderTemplateData{
-		Page:  "event_owner_dashboard",
-		Title: buildTitle("Reservas", event.Name),
-		Data:  data,
 	})
 }
 
@@ -1033,22 +985,7 @@ func (h *Handler) OwnerCheckin(
 		return
 	}
 
-	// 5. ATUALIZA CHECKINS SOMENTE EM CASO DE SUCESSO
-	if err == nil {
-		lastCheckin, _ := h.ticketRepo.GetLastCheckinsByEventID(
-			int64(view.Data.Event.ID),
-			5,
-		)
-
-		for i := range lastCheckin {
-			lastCheckin[i].CheckedInAtStr =
-				formatter.FormatDateTime(&lastCheckin[i].CheckedInAt)
-		}
-
-		view.LastCheckins = lastCheckin
-	}
-
-	// 6. RENDER FINAL
+	// RENDER FINAL
 	h.renderTemplate(w, "layout", RenderTemplateData{
 		Page:  "event_owner_dashboard",
 		Title: buildTitle("Check-in", view.Data.Event.Name),
@@ -1140,12 +1077,19 @@ func (h *Handler) loadOwnerDashboard(
 		return EventOwnerDashboardView{}, err
 	}
 
-	// =====================
-	// 🔥 FIX: CHECKINS SEMPRE DO BANCO
-	// =====================
-	lastCheckins, err := h.ticketRepo.GetLastCheckinsByEventID(event.ID, 5)
-	if err != nil {
-		return EventOwnerDashboardView{}, err
+	var lastCheckins []entity.LastCheckin
+
+	if tab == "checkin" {
+
+		lastCheckins, err = h.ticketRepo.GetLastCheckinsByEventID(event.ID, 5)
+		if err != nil {
+			return EventOwnerDashboardView{}, err
+		}
+		// Formata os horários para exibição na View
+		for i := range lastCheckins {
+			lastCheckins[i].CheckedInAtStr =
+				formatter.FormatDateTime(&lastCheckins[i].CheckedInAt)
+		}
 	}
 
 	return h.buildOwnerDashboard(

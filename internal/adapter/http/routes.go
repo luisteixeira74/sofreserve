@@ -52,9 +52,6 @@ func NewRouter(
 	mux.HandleFunc("/events/new", handler.CreateEventPage) // GET
 	mux.HandleFunc("/events", handler.CreateEventHandler) // POST
 
-	// owner event list
-	mux.HandleFunc("/manage/", handler.OwnerDashboard)
-
 	// dashboard do evento
 	mux.HandleFunc("/events/", func(w http.ResponseWriter, r *http.Request) {
 
@@ -66,10 +63,9 @@ func NewRouter(
 		if len(parts) == 3 &&
 			parts[2] == "reservations" {
 
-			handler.EventReservationsPage(
+			handler.OwnerDashboard(
 				w,
 				r,
-				parts[1],
 			)
 
 			return
