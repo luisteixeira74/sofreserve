@@ -37,7 +37,7 @@ func (r *InMemoryEventRepository) Create(name string, totalSeats int, endsAt tim
 	r.nextID++
 
 	r.events[id] = entity.Event{
-		ID:         id,
+		ID:         int64(id),
 		Name:       name,
 		TotalSeats: totalSeats,
 		EndsAt:     endsAt,
