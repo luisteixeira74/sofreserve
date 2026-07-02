@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+
 	"sof-reserve/internal/bench"
 )
 
@@ -30,5 +32,9 @@ func main() {
 		cfg.Concurrency = *concurrencyFlag
 	}
 
-	bench.Run(cfg)
+	fmt.Println("Running benchmark on:", cfg.Endpoint)
+
+	report := bench.Run(cfg)
+
+	bench.Print(cfg, report)
 }

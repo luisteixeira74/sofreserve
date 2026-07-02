@@ -1,10 +1,40 @@
 # SOFRESERVE
 
-SOFRESERVE is an event reservation and check-in platform built with Go.
+SOFRESERVE is a backend-focused event reservation and ticketing system built with Go.
 
-The project was created to explore backend architecture concepts, event management flows, QR-code validation and public ticket access using a lightweight server-side rendered application.
+The project was designed as a real-world backend simulation to demonstrate system design skills, clean architecture principles, and the ability to build scalable and realistic event-driven flows.
+
+Instead of focusing only on CRUD operations, the system models a complete ticket lifecycle: from event creation to participant check-in at entry.
 
 ---
+
+## 🎯 What This Project Demonstrates
+
+SOFRESERVE was built to showcase backend engineering skills beyond basic APIs, including:
+
+- System design for real-world flows
+- Clean Architecture in Go
+- Stateless ticket validation using tokens
+- High-level separation of concerns
+- Multi-step business workflows
+- Server-side rendered applications
+- Practical trade-offs between simplicity and realism
+
+---
+
+## 🔄 End-to-End System Flow
+
+The system simulates a real event ticketing lifecycle:
+
+````txt
+1. Event creation by organizer
+2. Participant reservation request
+3. Ticket generation (unique token per participant)
+4. Ticket distribution via WhatsApp share link
+5. Participant accesses public ticket page (/ticket/{token})
+6. Ticket is rendered with QR code and validation data
+7. Check-in is performed at event entrance using token
+8. Ticket status is updated to CHECKED-IN
 
 ## Features
 
@@ -49,7 +79,7 @@ internal/
   shared/
   view/
 migrations/
-```
+````
 
 ---
 

@@ -50,7 +50,6 @@ func DefaultConfig() Config {
 }
 
 func Run(cfg Config) Report {
-	fmt.Println("Running benchmark on:", cfg.Endpoint)
 
 	start := time.Now()
 
