@@ -12,19 +12,27 @@ type CheckinTicket struct {
 }
 
 func NewCheckinTicket(
-    db *sql.DB,
-    ticketRepo port.TicketRepository,
+	db *sql.DB,
+	ticketRepo port.TicketRepository,
 ) *CheckinTicket {
 
-    return &CheckinTicket{
-        DB: db,
-        TicketRepo: ticketRepo,
-    }
+	return &CheckinTicket{
+		DB:         db,
+		TicketRepo: ticketRepo,
+	}
 }
 
 func (u *CheckinTicket) Execute(token string) error {
 	if token == "" {
 		return appErrors.ErrInvalidToken
+	}
+
+	ticket, err := u.TicketRepo.FindByToken(token)
+	if err == sql.ErrNoRows {
+		return appErrors.ErrInvalidToken
+	}
+	if err != nil {
+		return err
 	}
 
 	tx, err := u.DB.Begin()
@@ -36,15 +44,6 @@ func (u *CheckinTicket) Execute(token string) error {
 		_ = tx.Rollback()
 	}()
 
-	ticket, err := u.TicketRepo.FindByToken(token)
-	if err == sql.ErrNoRows {
-		return appErrors.ErrInvalidToken
-	}
-	if err != nil {
-		return err
-	}
-
-	// 2. tentativa de check-in (estado real)
 	rows, err := u.TicketRepo.MarkCheckinIfValid(tx, ticket.Token)
 	if err != nil {
 		return err

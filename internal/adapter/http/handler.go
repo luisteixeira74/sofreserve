@@ -949,7 +949,7 @@ func (h *Handler) OwnerCheckin(
 
 	log.Println("Executando checkin para:", token)
 
-	// 1. EXECUTA CHECK-IN PRIMEIRO (fonte de verdade)
+	// 1. EXECUTA CHECK-IN PRIMEIRO
 	err := h.checkinTicketUC.Execute(token)
 
 	log.Printf("Resultado Execute(): %v\n", err)
@@ -965,20 +965,23 @@ func (h *Handler) OwnerCheckin(
 	view.UI.CheckinError = ""
 	view.UI.CheckinMessage = ""
 
-	// 4. MAPEAMENTO DE ERROS (SÓ UI, SEM LÓGICA DE NEGÓCIO)
+	// 4. MAPEAMENTO DE ERROS
 	switch err {
 
 	case nil:
 		view.UI.CheckinMessage = "Check-in realizado com sucesso"
 
 	case coreErr.ErrInvalidToken:
-		view.UI.CheckinError = "Token inválido"
+		http.Error(w, "ticket inválido", http.StatusBadRequest)
+		return
 
 	case coreErr.ErrTicketAlreadyCheckedIn:
-		view.UI.CheckinError = "Ticket já utilizado"
+		http.Error(w, "ticket já usado", http.StatusConflict)
+		return
 
 	case coreErr.ErrTicketNotFound:
-		view.UI.CheckinError = "Ticket não encontrado"
+		http.Error(w, "ticket não encontrado", http.StatusNotFound)
+		return
 
 	default:
 		http.Error(w, "internal server error", http.StatusInternalServerError)

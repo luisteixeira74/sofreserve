@@ -9,8 +9,9 @@ import (
 )
 
 func TestRaceCondition(t *testing.T) {
-	token := "tkt_TESTE_123"
-	endpoint := "http://localhost:8080/events/djids3wi/checkin"
+	setupCheckinFixture(t)
+
+	endpoint := "http://localhost:8080/events/" + checkinPublicID + "/checkin"
 
 	var wg sync.WaitGroup
 
@@ -27,7 +28,7 @@ func TestRaceCondition(t *testing.T) {
 			defer wg.Done()
 
 			form := url.Values{}
-			form.Add("token", token)
+			form.Add("token", checkinToken)
 
 			resp, err := http.PostForm(endpoint, form)
 			if err != nil {
@@ -39,12 +40,14 @@ func TestRaceCondition(t *testing.T) {
 			defer resp.Body.Close()
 
 			mu.Lock()
+
 			switch resp.StatusCode {
-			case 200:
+			case http.StatusOK:
 				success++
 			default:
 				fail++
 			}
+
 			mu.Unlock()
 		}()
 	}

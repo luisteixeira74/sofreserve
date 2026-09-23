@@ -9,11 +9,7 @@ import (
 	"time"
 )
 
-const (
-	endpoint = "http://localhost:8080/events/djids3wi/checkin"
-	token    = "tkt_TESTE_123"
-	requests = 1000
-)
+const requests = 1000
 
 type Metrics struct {
 	success   int
@@ -45,6 +41,8 @@ func (m *Metrics) recordError() {
 }
 
 func TestStressCheckinPerformance(t *testing.T) {
+	setupCheckinFixture(t)
+
 	startTest := time.Now()
 
 	var wg sync.WaitGroup
@@ -59,10 +57,13 @@ func TestStressCheckinPerformance(t *testing.T) {
 			defer wg.Done()
 
 			form := url.Values{}
-			form.Add("token", token)
+			form.Add("token", checkinToken)
 
 			start := time.Now()
-			resp, err := http.PostForm(endpoint, form)
+			resp, err := http.PostForm(
+				"http://localhost:8080/events/"+checkinPublicID+"/checkin",
+				form,
+			)
 			latency := time.Since(start)
 
 			if err != nil {
