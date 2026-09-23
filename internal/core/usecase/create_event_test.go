@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"sof-reserve/internal/core/entity"
+	coreErr "sof-reserve/internal/core/errors"
 	"sof-reserve/internal/core/usecase"
 )
 
@@ -21,29 +22,25 @@ Valida criação de evento com:
 */
 
 type InMemoryEventRepository struct {
-	events map[int]entity.Event
-	nextID int
+	events map[int64]entity.Event
+	nextID int64
 }
 
 func NewInMemoryEventRepository() *InMemoryEventRepository {
 	return &InMemoryEventRepository{
-		events: make(map[int]entity.Event),
+		events: make(map[int64]entity.Event),
 		nextID: 1,
 	}
 }
 
-func (r *InMemoryEventRepository) Create(name string, totalSeats int, endsAt time.Time) (int, error) {
+func (r *InMemoryEventRepository) Create(event entity.Event) (int64, error) {
 	id := r.nextID
 	r.nextID++
 
-	r.events[id] = entity.Event{
-		ID:         int64(id),
-		Name:       name,
-		TotalSeats: totalSeats,
-		EndsAt:     endsAt,
-	}
+	event.ID = int64(id)
+	r.events[event.ID] = event
 
-	return id, nil
+	return event.ID, nil
 }
 
 func TestCreateEventUseCase(t *testing.T) {
@@ -73,9 +70,13 @@ func TestCreateEventUseCase(t *testing.T) {
 		t.Fatal("expected valid event ID")
 	}
 
-	event, exists := repo.events[id]
+	event, exists := repo.FindByID(id)
 	if !exists {
 		t.Fatal("event not found in repository")
+	}
+
+	if event.ID <= 0 {
+		t.Fatal("expected valid event ID")
 	}
 
 	if event.Name != eventName {
@@ -85,4 +86,69 @@ func TestCreateEventUseCase(t *testing.T) {
 	if event.TotalSeats != totalSeats {
 		t.Errorf("expected %d seats, got %d", totalSeats, event.TotalSeats)
 	}
+}
+
+func TestCreateEventUseCase_InvalidName(t *testing.T) {
+	// ARRANGE
+	repo := NewInMemoryEventRepository()
+	uc := usecase.NewCreateEventUseCase(repo)
+
+	input := usecase.CreateEventInput{
+		Name:       "",
+		TotalSeats: 100,
+		EndsAt:     time.Now().Add(24 * time.Hour),
+	}
+
+	// ACT
+	_, err := uc.Execute(input)
+
+	// ASSERT
+	if err != coreErr.ErrInvalidName {
+		t.Fatalf("expected ErrInvalidName, got %v", err)
+	}
+}
+
+func TestCreateEventUseCase_InvalidQuantity(t *testing.T) {
+	// ARRANGE
+	repo := NewInMemoryEventRepository()
+	uc := usecase.NewCreateEventUseCase(repo)
+
+	input := usecase.CreateEventInput{
+		Name:       "Show Rock",
+		TotalSeats: 0,
+		EndsAt:     time.Now().Add(24 * time.Hour),
+	}
+
+	// ACT
+	_, err := uc.Execute(input)
+
+	// ASSERT
+	if err != coreErr.ErrInvalidQuantity {
+		t.Fatalf("expected ErrInvalidQuantity, got %v", err)
+	}
+}
+
+func TestCreateEventUseCase_EventClosed(t *testing.T) {
+	// ARRANGE
+	repo := NewInMemoryEventRepository()
+	uc := usecase.NewCreateEventUseCase(repo)
+
+	input := usecase.CreateEventInput{
+		Name:       "Show Rock",
+		TotalSeats: 100,
+		EndsAt:     time.Now().Add(-24 * time.Hour),
+	}
+
+	// ACT
+	_, err := uc.Execute(input)
+
+	// ASSERT
+	if err != coreErr.ErrEventClosed {
+		t.Fatalf("expected ErrEventClosed, got %v", err)
+	}
+}
+
+func (r *InMemoryEventRepository) FindByID(id int64) (entity.Event, bool) {
+	event, ok := r.events[id]
+	return event, ok
 }

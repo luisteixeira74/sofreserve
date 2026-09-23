@@ -9,10 +9,10 @@ import (
 )
 
 type CreateEventUseCase struct {
-	repo port.EventRepository
+	repo port.CreateEventRepository
 }
 
-func NewCreateEventUseCase(repo port.EventRepository) *CreateEventUseCase {
+func NewCreateEventUseCase(repo port.CreateEventRepository) *CreateEventUseCase {
 	return &CreateEventUseCase{
 		repo: repo,
 	}
