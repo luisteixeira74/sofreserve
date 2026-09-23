@@ -1,0 +1,74 @@
+name: CI
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.26"
+
+            - name: Download dependencies
+              run: go mod download
+
+            - name: Start PostgreSQL
+              run: docker compose up -d db
+
+            - name: Wait for PostgreSQL
+              run: |
+                  for i in {1..30}; do
+                    if docker exec sof-reserve-db pg_isready -U postgres -d sofreserve; then
+                      echo "PostgreSQL is ready"
+                      break
+                    fi
+
+                    echo "Waiting for PostgreSQL..."
+                    sleep 2
+                  done
+
+            - name: Start API
+              run: |
+                  go run ./cmd/api > api.log 2>&1 &
+                  echo $! > api.pid
+
+            - name: Wait for API
+              run: |
+                  for i in {1..30}; do
+                    if curl -fsS http://localhost:8080/ > /dev/null; then
+                      echo "API is ready"
+                      break
+                    fi
+
+                    echo "Waiting for API..."
+                    sleep 2
+                  done
+
+            - name: Run tests
+              run: go test ./... -count=1
+
+            - name: Run race detector
+              run: go test -race ./...
+
+            - name: Build
+              run: go build ./...
+
+            - name: Show API logs
+              if: failure()
+              run: cat api.log
+
+            - name: Stop PostgreSQL
+              if: always()
+              run: docker compose down -v
