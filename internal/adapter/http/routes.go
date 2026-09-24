@@ -10,52 +10,57 @@ import (
 )
 
 func NewRouter(
-    createReservationUC *usecase.CreateReservationUseCase,
-    confirmUC *usecase.ConfirmReservationUseCase,
-    eventViewUC *usecase.GetEventViewUseCase,
+	createReservationUC *usecase.CreateReservationUseCase,
+	confirmUC *usecase.ConfirmReservationUseCase,
+	eventViewUC *usecase.GetEventViewUseCase,
 
-    eventRepo port.EventRepository,
-    reservationRepo port.ReservationRepository,
-    ticketRepo port.TicketRepository,
+	eventRepo port.EventRepository,
+	reservationRepo port.ReservationRepository,
+	ticketRepo port.TicketRepository,
 
-    createEventUC *usecase.CreateEventUseCase,
-    getOrganizerStatsUC *usecase.GetOrganizerStatsUseCase,
-    checkinTicketUC *usecase.CheckinTicket,
+	createEventUC *usecase.CreateEventUseCase,
+	getOrganizerStatsUC *usecase.GetOrganizerStatsUseCase,
+	checkinTicketUC *usecase.CheckinTicket,
 
-    db *sql.DB,
+	db *sql.DB,
+
+	buildInfo BuildInfo,
 ) http.Handler {
 
 	handler := &Handler{
-		reserveUC:       createReservationUC,
-		confirmUC:       confirmUC,
-		eventViewUC:     eventViewUC,
+		reserveUC:   createReservationUC,
+		confirmUC:   confirmUC,
+		eventViewUC: eventViewUC,
 
 		eventRepo:       eventRepo,
 		reservationRepo: reservationRepo,
 		ticketRepo:      ticketRepo,
 
-		createEventUC:   createEventUC,
-		organizerStatsUC:  getOrganizerStatsUC,
-		checkinTicketUC: checkinTicketUC,
+		createEventUC:    createEventUC,
+		organizerStatsUC: getOrganizerStatsUC,
+		checkinTicketUC:  checkinTicketUC,
 
-		db:              db,
+		db: db,
+
+		buildInfo: buildInfo,
 	}
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", handler.HealthHandler)
+	mux.HandleFunc("/version", handler.VersionHandler)
 
 	// pages
 	mux.HandleFunc("/", handler.LandingPage)
 
 	// events
 	mux.HandleFunc("/events/new", handler.CreateEventPage) // GET
-	mux.HandleFunc("/events", handler.CreateEventHandler) // POST
+	mux.HandleFunc("/events", handler.CreateEventHandler)  // POST
 
 	// dashboard do evento
 	mux.HandleFunc("/events/", func(w http.ResponseWriter, r *http.Request) {
 
-			parts := strings.Split(
+		parts := strings.Split(
 			strings.Trim(r.URL.Path, "/"),
 			"/",
 		)
@@ -90,10 +95,10 @@ func NewRouter(
 
 	// link publico do evento
 	mux.HandleFunc("/e/", handler.EventPublicPage)
-	
+
 	// reservation form
 	mux.HandleFunc("/events/reserve", handler.CreateReservationHandler)
-	
+
 	// confirm / cancel
 	mux.HandleFunc("/confirm", handler.ConfirmReservation)
 	mux.HandleFunc("/cancel", handler.CancelReservation)

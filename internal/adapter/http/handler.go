@@ -28,6 +28,28 @@ var tmpl = template.Must(
 )
 
 // =====================
+// HANDLER
+// =====================
+
+type Handler struct {
+	reserveUC     *usecase.CreateReservationUseCase
+	confirmUC     *usecase.ConfirmReservationUseCase
+	eventViewUC   *usecase.GetEventViewUseCase
+	createEventUC *usecase.CreateEventUseCase
+
+	eventRepo        port.EventRepository
+	reservationRepo  port.ReservationRepository
+	organizerStatsUC *usecase.GetOrganizerStatsUseCase
+
+	db *sql.DB
+
+	checkinTicketUC *usecase.CheckinTicket
+	ticketRepo      port.TicketRepository
+
+	buildInfo BuildInfo
+}
+
+// =====================
 // VIEW MODELS
 // =====================
 
@@ -94,7 +116,6 @@ type EventOwnerDashboardView struct {
 
 	LastCheckins []entity.LastCheckin
 }
-
 
 // =====================
 // RESERVATION PAGE
@@ -185,26 +206,6 @@ type TicketViewData struct {
 }
 
 // =====================
-// HANDLER
-// =====================
-
-type Handler struct {
-	reserveUC       *usecase.CreateReservationUseCase
-	confirmUC       *usecase.ConfirmReservationUseCase
-	eventViewUC     *usecase.GetEventViewUseCase
-	createEventUC   *usecase.CreateEventUseCase
-
-	eventRepo       port.EventRepository
-	reservationRepo port.ReservationRepository
-	organizerStatsUC  *usecase.GetOrganizerStatsUseCase
-
-	db *sql.DB
-
-	checkinTicketUC *usecase.CheckinTicket
-	ticketRepo    port.TicketRepository
-}
-
-// =====================
 // TEMPLATE
 // =====================
 
@@ -227,8 +228,27 @@ func (h *Handler) renderTemplate(
 // =====================
 
 func (h *Handler) HealthHandler(w http.ResponseWriter, r *http.Request) {
+	if err := h.db.PingContext(r.Context()); err != nil {
+		http.Error(w, "database unavailable", http.StatusServiceUnavailable)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("OK"))
+
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
+}
+
+func (h *Handler) VersionHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	_, _ = fmt.Fprintf(
+		w,
+		`{"version":%q,"commit":%q}`,
+		h.buildInfo.Version,
+		h.buildInfo.Commit,
+	)
 }
 
 func buildTitle(page string, context string) string {
@@ -369,29 +389,29 @@ func (h *Handler) CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 // =====================
 
 func (h *Handler) EventPageByPublicID(
-    w http.ResponseWriter,
-    r *http.Request,
+	w http.ResponseWriter,
+	r *http.Request,
 ) {
-    parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 
-    if len(parts) < 2 || parts[1] == "" {
-        http.NotFound(w, r)
-        return
-    }
+	if len(parts) < 2 || parts[1] == "" {
+		http.NotFound(w, r)
+		return
+	}
 
-    // owner dashboard
-    if len(parts) == 3 && parts[2] == "reservations" {
-        h.OwnerDashboard(w, r)
-        return
-    }
+	// owner dashboard
+	if len(parts) == 3 && parts[2] == "reservations" {
+		h.OwnerDashboard(w, r)
+		return
+	}
 
-    publicID := parts[1]
+	publicID := parts[1]
 
-    ucView, err := h.eventViewUC.ExecuteByPublicID(publicID)
-    if err != nil {
-        http.NotFound(w, r)
-        return
-    }
+	ucView, err := h.eventViewUC.ExecuteByPublicID(publicID)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
 
 	baseURL := getBaseURL(r)
 
@@ -412,24 +432,23 @@ func (h *Handler) EventPageByPublicID(
 	}
 
 	view := EventView{
-		ID:            ucView.ID,
-		Name:          ucView.Name,
-		TotalSeats:    ucView.TotalSeats,
-		Reserved:      ucView.Reserved,
-		Available:     available,
-		Percentage:    percentage,
-		RemainingText: ucView.RemainingText,
-		ShowAlert:     ucView.ShowAlert,
-		IsClosed:      ucView.IsClosed,
-		PublicID:      ucView.PublicID,
-		PublicLink:    baseURL + "/e/" + ucView.PublicID,
-		OrganizerEmail: ucView.OrganizerEmail,
+		ID:                  ucView.ID,
+		Name:                ucView.Name,
+		TotalSeats:          ucView.TotalSeats,
+		Reserved:            ucView.Reserved,
+		Available:           available,
+		Percentage:          percentage,
+		RemainingText:       ucView.RemainingText,
+		ShowAlert:           ucView.ShowAlert,
+		IsClosed:            ucView.IsClosed,
+		PublicID:            ucView.PublicID,
+		PublicLink:          baseURL + "/e/" + ucView.PublicID,
+		OrganizerEmail:      ucView.OrganizerEmail,
 		OrganizerEventCount: stats.EventCount,
-		LastUpdated:   time.Now().Format("15:04:05"),
+		LastUpdated:         time.Now().Format("15:04:05"),
 		WhatsAppShareText: url.QueryEscape(
 			"Acesse o evento: " + baseURL + "/e/" + ucView.PublicID,
 		),
-
 	}
 
 	h.renderTemplate(w, "layout", RenderTemplateData{
@@ -453,7 +472,7 @@ func mapEventView(uc usecase.EventView) EventView {
 		ShowAlert:     uc.ShowAlert,
 		IsClosed:      uc.IsClosed,
 
-		PublicID:    uc.PublicID,
+		PublicID: uc.PublicID,
 	}
 }
 
@@ -483,7 +502,6 @@ func (h *Handler) EventPublicPage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-
 
 	stats, err := h.organizerStatsUC.Execute(ucView.OrganizerEmail)
 	if err != nil {
@@ -535,7 +553,7 @@ func (h *Handler) reservationPageByPublicID(w http.ResponseWriter, r *http.Reque
 		Data: ReservationPageData{
 			EventID:   view.ID,
 			EventName: view.Name,
-			Available:  available, // 👈 ESSENCIAL
+			Available: available, // 👈 ESSENCIAL
 		},
 	})
 }
@@ -903,7 +921,7 @@ func (h *Handler) TicketView(
 		Token:        ticket.Token,
 		TicketNumber: ticket.TicketNumber,
 
-		TicketURL:  baseURL + "/ticket/" + ticket.Token,
+		TicketURL: baseURL + "/ticket/" + ticket.Token,
 
 		WhatsAppLink: message.BuildTicketWhatsAppMessage(
 			baseURL,
@@ -1151,7 +1169,6 @@ func (h *Handler) buildOwnerDashboard(
 			WhatsAppShareText: url.QueryEscape(
 				"Acesse o evento: " + publicLink,
 			),
-
 		},
 
 		UI: EventDashboardUIState{

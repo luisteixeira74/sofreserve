@@ -18,6 +18,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
+const appVersion = "1.0.0"
+
 func main() {
 	_ = godotenv.Load()
 
@@ -71,12 +73,19 @@ func main() {
 		eventRepo,
 	)
 
-	
-
 	checkinTicketUC := usecase.NewCheckinTicket(
 		database,
 		ticketRepo,
 	)
+
+	buildInfo := httpadapter.BuildInfo{
+		Version: appVersion,
+		Commit:  os.Getenv("RENDER_GIT_COMMIT"),
+	}
+
+	if buildInfo.Commit == "" {
+		buildInfo.Commit = "unknown"
+	}
 
 	// =====================
 	// ROUTER
@@ -92,10 +101,8 @@ func main() {
 		getOrganizerStatsUC,
 		checkinTicketUC,
 		database,
-
+		buildInfo,
 	)
-
-
 
 	// =====================
 	// SERVER CONFIG
