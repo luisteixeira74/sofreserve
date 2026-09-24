@@ -21,3 +21,6 @@ coverage.out
 
 # macOS
 .DS_Store
+
+# Supabase local state
+supabase/.temp/
