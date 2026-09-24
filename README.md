@@ -2,38 +2,47 @@
 
 SOFRESERVE is a backend-focused event reservation and ticketing platform built with Go.
 
-The project was created as a portfolio application to demonstrate backend engineering skills through a realistic event management workflow rather than isolated CRUD operations.
+The project models an end-to-end event lifecycle—from event creation and reservation to individual ticket generation, QR-code validation, and concurrent check-in handling.
 
-It simulates the complete lifecycle of an event, including event creation, reservations, individual ticket generation, public ticket access, participant check-in, and organizer dashboards.
+The project focuses on practical backend engineering: business rules, separation of concerns, PostgreSQL transactions, concurrency protection, automated testing, benchmarking, and CI/CD.
 
-The main goal is to demonstrate software architecture, business workflow implementation, and clean backend design.
-
----
-
-# 🎯 What This Project Demonstrates
-
-SOFRESERVE showcases practical backend development concepts, including:
-
-- Clean Architecture
-- Layered application design
-- Repository Pattern
-- Dependency Injection
-- HTTP server development with Go
-- PostgreSQL integration
-- Token-based ticket validation
-- QR-code ticket generation
-- Server-side rendering
-- Business workflow implementation
-- Benchmarking and stress testing
-- Separation of concerns
-
-Rather than exposing isolated endpoints, the project models an end-to-end business process similar to real-world ticketing platforms.
+> **📌 Architecture Note**
+>
+> The system uses public access based on secure tokens to simplify the user journey without requiring account registration or login. The technical complexity is concentrated on business rules, concurrency control, persistence, and clean separation between application layers.
 
 ---
 
-# 🔄 End-to-End Workflow
+## 🎯 Key Technical Highlights
 
-```txt
+- **Clean Architecture & Domain Separation**
+  Clear boundaries between business entities, use cases, ports, HTTP handlers, and persistence adapters.
+
+- **Concurrent Check-in Protection**
+  Ticket check-in uses an atomic PostgreSQL update to ensure that a ticket can only be checked in once, even when multiple requests arrive concurrently.
+
+- **Concurrency Testing**
+  Includes concurrent check-in tests and a custom CLI benchmarking tool for stress testing HTTP endpoints.
+
+- **Custom Benchmarking Tool**
+  CLI utility for generating concurrent requests and measuring throughput and latency, including RPS and percentile metrics such as P50/P99.
+
+- **Token-Based Public Access**
+  Reservations and tickets use token-based public access, avoiding unnecessary authentication complexity for the event workflow.
+
+- **Automated Testing & Race Detection**
+  GitHub Actions runs the test suite, Go race detector, and application build.
+
+- **CI/CD**
+  GitHub Actions provides CI, while Render automatically deploys the `main` branch after successful changes.
+
+- **Production Database**
+  Production runs on PostgreSQL managed by Supabase.
+
+---
+
+## 🔄 End-to-End Workflow
+
+```text
 Organizer creates an event
         │
         ▼
@@ -43,169 +52,335 @@ Participant submits a reservation
 Reservation is confirmed
         │
         ▼
-Individual tickets are generated
-(one token per participant)
+Individual ticket is generated
         │
         ▼
-Organizer shares tickets via WhatsApp
-        │
-        ▼
-Participant opens:
-
+Participant accesses public ticket
 /ticket/{token}
-
         │
         ▼
-Public ticket page displays:
-- Event information
-- Full ticket token
-- QR Code
-- Current status
+Organizer validates ticket via QR code
         │
         ▼
-Organizer validates ticket
-during event entrance
+Atomic check-in operation
         │
         ▼
-Ticket status becomes:
-
-CHECKED-IN
+Ticket becomes CHECKED-IN
 ```
 
 ---
 
-# 🚀 Features
+## 🏛 Project Architecture
 
-- Event creation
-- Public reservation page
-- Reservation confirmation
-- Reservation cancellation
-- Individual ticket generation
-- Public ticket page
-- QR-code rendering
-- Token-based ticket validation
-- Event check-in
-- Organizer dashboard
-- Reservation management
-- Recent check-in history
-- WhatsApp ticket sharing
-- Benchmark / stress test tool
+The application follows a pragmatic Clean Architecture approach:
 
----
+```text
+HTTP Handler
+     │
+     ▼
+Use Case
+     │
+     ▼
+Port Interface
+     │
+     ▼
+PostgreSQL Repository
+     │
+     ▼
+PostgreSQL
+```
 
-# 🛠 Tech Stack
+Project structure:
 
-- Go
-- PostgreSQL
-- HTML Templates
-- CSS
-- Vanilla JavaScript
-- Docker Compose
-
----
-
-# 🏛 Architecture
-
-The project follows Clean Architecture principles with clear separation between business rules, HTTP layer and persistence.
-
-```txt
+```text
 cmd/
+├── api/                # API application entrypoint
+└── bench/              # Benchmark CLI
 
 internal/
-    adapter/
-        http/
-        repository/
+├── adapter/
+│   ├── http/           # HTTP handlers and routing
+│   └── repository/     # PostgreSQL repositories
+│
+├── core/
+│   ├── entity/         # Domain entities
+│   ├── usecase/        # Application use cases
+│   └── port/           # Repository interfaces
+│
+├── infra/
+│   └── db/             # Database connection
+│
+├── shared/             # Cross-cutting utilities
+└── view/
+    └── templates/      # Server-side HTML templates
 
-    core/
-        entity/
-        usecase/
-        port/
-
-    shared/
-
-    view/
-
-migrations/
+migrations/             # Local database migrations
+supabase/
+└── migrations/         # Production/Supabase migrations
 ```
-
-Main architectural concepts:
-
-- HTTP Handlers
-- Use Cases
-- Repository Pattern
-- Dependency Injection
-- Layered Architecture
-- Separation of Concerns
 
 ---
 
-# ⚙ Configuration
+## 🛠 Tech Stack
+
+### Backend
+
+- Go
+- `net/http`
+- PostgreSQL
+- SQL
+- HTML Templates
+
+### Testing
+
+- Go testing
+- Concurrent tests
+- Go race detector
+- HTTP stress testing
+
+### Infrastructure
+
+- Docker
+- Docker Compose
+- GitHub Actions
+- Render
+- Supabase PostgreSQL
+
+### Frontend
+
+- Server-side HTML Templates
+- CSS
+- Vanilla JavaScript
+
+---
+
+## 🚀 Running Locally
+
+### Requirements
+
+- Go
+- Docker
+- Docker Compose
+
+Clone the repository and enter the project:
+
+```bash
+git clone git@github.com:luisteixeira74/sofreserve.git
+cd sofreserve
+```
+
+Create the local environment file:
 
 ```bash
 cp .env.example .env
 ```
 
----
-
-# ▶ Running locally
-
 Start PostgreSQL:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
-Run the application:
+Run the API:
 
 ```bash
-go run cmd/api/main.go
+go run ./cmd/api
 ```
 
-Application:
+The application will be available at:
 
-```txt
+```text
 http://localhost:8080
+```
+
+Health check:
+
+```bash
+curl http://localhost:8080/health
+```
+
+Expected response:
+
+```json
+{ "status": "ok" }
+```
+
+Version information:
+
+```bash
+curl http://localhost:8080/version
+```
+
+Example local response:
+
+```json
+{ "version": "1.0.0", "commit": "unknown" }
+```
+
+In production, the commit field identifies the Git commit deployed by Render.
+
+---
+
+## 🧪 Testing
+
+Run the complete test suite:
+
+```bash
+go test ./...
+```
+
+Run with the Go race detector:
+
+```bash
+go test -race ./...
 ```
 
 ---
 
-# 📊 Benchmark
+## 📊 Benchmarking & Stress Testing
 
-SOFRESERVE includes a lightweight benchmark tool capable of generating concurrent HTTP requests against application endpoints.
-
-Current benchmark capabilities include:
-
-- Configurable concurrency
-- Configurable request volume
-- Average latency
-- Min / Max latency
-- Requests per second (RPS)
-- HTTP success/error statistics
+SOFRESERVE includes a custom CLI tool for concurrent HTTP stress testing.
 
 Example:
 
 ```bash
-go run cmd/bench/main.go \
+go run ./cmd/bench \
   -endpoint=http://localhost:8080/events/{event}/checkin \
   -token={ticket_token} \
   -requests=100 \
   -concurrency=10
 ```
 
+The benchmark tool can be used to evaluate:
+
+- total requests
+- successful and failed requests
+- throughput (RPS)
+- total execution time
+- minimum latency
+- average latency
+- maximum latency
+- latency percentiles such as P50/P99
+
+The project also includes concurrent check-in coverage to verify that multiple simultaneous attempts against the same ticket result in a single successful check-in.
+
 ---
 
-# ✅ Current Functionality
+## 🔒 Concurrent Check-in
 
-- Event management
-- Reservation workflow
-- Confirmation flow
-- Individual ticket generation
-- Public ticket visualization
-- QR-code rendering
-- WhatsApp ticket sharing
-- Organizer dashboard
-- Participant check-in
-- Benchmarking
+The critical check-in operation is protected at the database level.
+
+The ticket is updated only when it has not already been checked in:
+
+```sql
+UPDATE reservation_tickets
+SET checked_in_at = NOW()
+WHERE token = $1
+  AND checked_in_at IS NULL;
+```
+
+The application checks the number of affected rows to determine whether the check-in succeeded.
+
+This makes the database operation itself responsible for enforcing the single-use rule under concurrent requests.
+
+---
+
+## 🔄 CI/CD
+
+### Continuous Integration
+
+GitHub Actions runs:
+
+```text
+Checkout
+   ↓
+Go setup
+   ↓
+PostgreSQL container
+   ↓
+go test ./...
+   ↓
+go test -race ./...
+   ↓
+go build ./...
+```
+
+The CI database is disposable and separate from the production database.
+
+### Continuous Deployment
+
+The production deployment flow is:
+
+```text
+git push main
+     ↓
+GitHub
+     ↓
+Render Auto-Deploy
+     ↓
+Go build
+     ↓
+Application deployment
+     ↓
+Supabase PostgreSQL
+```
+
+The deployed application exposes:
+
+```text
+/health
+/version
+```
+
+`/health` verifies database connectivity, while `/version` exposes the application version and deployed Git commit.
+
+---
+
+## ☁️ Production
+
+The application is deployed on Render and uses Supabase PostgreSQL as its production database.
+
+**Live application:**
+
+```text
+https://sofreserve.onrender.com
+```
+
+Production health endpoint:
+
+```text
+https://sofreserve.onrender.com/health
+```
+
+Production version endpoint:
+
+```text
+https://sofreserve.onrender.com/version
+```
+
+The `/version` endpoint allows the running application to be correlated with the Git commit deployed to production.
+
+---
+
+## 📸 Screenshots
+
+### Event Owner Dashboard
+
+![Event Dashboard](docs/screenshots/sofreserve_dashboard.png)
+
+### Reservation Confirmation
+
+![Reservation Confirmation](docs/screenshots/sofreserve_ticket_confirmation.png)
+
+### Public Access Ticket
+
+![Public Ticket](docs/screenshots/sofreserve_public_access_ticket.png)
+
+### Event Check-in
+
+![Event Check-in](docs/screenshots/sofreserve_event_checkin.png)
+
+---
 
 ## Screenshots
 
@@ -226,17 +401,3 @@ go run cmd/bench/main.go \
 ![Event Check-in](docs/screenshots/sofreserve_event_checkin.png)
 
 ---
-
-## Goals
-
-The project is being continuously improved with focus on:
-
-- Clean architecture concepts
-- Realistic backend flows
-- Scalability
-- Event management experience
-- Go backend development practices
-
-```
-
-```
