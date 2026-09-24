@@ -4,21 +4,25 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/url"
 	"sof-reserve/internal/config"
 
 	_ "github.com/lib/pq"
 )
 
 func NewConnection(cfg config.Config) *sql.DB {
-	connStr := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		cfg.DBUser,
-		cfg.DBPassword,
-		cfg.DBHost,
-		cfg.DBPort,
-		cfg.DBName,
-		cfg.DBSSLMode,
-	)
+	u := &url.URL{
+		Scheme: "postgres",
+		Host:   fmt.Sprintf("%s:%s", cfg.DBHost, cfg.DBPort),
+		Path:   cfg.DBName,
+	}
+
+	u.User = url.UserPassword(cfg.DBUser, cfg.DBPassword)
+	q := u.Query()
+	q.Set("sslmode", cfg.DBSSLMode)
+	u.RawQuery = q.Encode()
+
+	connStr := u.String()
 
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
